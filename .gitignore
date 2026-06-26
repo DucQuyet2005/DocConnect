@@ -1,0 +1,72 @@
+## Target folders
+bin/
+obj/
+
+## Visual Studio cache and settings
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider & VS Code settings
+.idea/
+.vscode/
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+## Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.pdb
+*.pkl
+*.cache
+
+## OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+## NuGet Packages
+*.nupkg
+# The packages folder can be ignored as they are restored automatically
+packages/
+# NuGet Packager tool
+*.nuget.props
+*.nuget.targets
+
+## Database files
+*.mdf
+*.ldf
+*.sdf
+*.db
+*.sqlite
+
+## User secrets and configuration overrides
+appsettings.local.json
+appsettings.Development.json
+# Uncomment the line below if you want to keep appsettings.json as a template only and ignore actual config
+# appsettings.json
+secrets.json
+*.usersecrets
+
+## Node.js (If you build frontend assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## Log files
+*.log
+
+## Agent Skills
+# Installed skill directories (can be restored using 'npx skills experimental_install' from skills-lock.json)
+.agents/
