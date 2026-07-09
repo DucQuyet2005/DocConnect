@@ -1,8 +1,856 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<DocConnect.Web.Models.ViewModels.BacSiViewModel>
+
+@{
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    :root {
+        --brand-color: #004E9F;
+    }
+
+    /* Các class màu chủ đạo bổ sung */
+    .btn-main {
+        background-color: var(--brand-color);
+        color: white;
+    }
+    .btn-main:hover {
+        background-color: #003a77;
+        color: white;
+    }
+    .text-main {
+        color: var(--brand-color);
+    }
+    .bg-main {
+        background-color: var(--brand-color);
+        color: white;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #eef5ff 0%, #ffffff 100%);
+        padding: 60px 0;
+    }
+    .service-card {
+        border: none;
+        border-radius: 15px;
+        transition: 0.3s;
+        text-align: center;
+        padding: 25px;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    .service-card:hover { transform: translateY(-10px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .service-card i { font-size: 40px; color: var(--brand-color); margin-bottom: 15px; }
+    
+    .search-box {
+        background: white;
+        border-radius: 50px;
+        padding: 10px 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        max-width: 800px;
+        margin: -35px auto 0;
+    }
+    .search-box input { border: none; outline: none; flex: 1; padding: 10px; }
+    .search-box .btn-search { background: var(--brand-color); color: white; border-radius: 30px; padding: 8px 25px; }
+
+    .section-title { font-weight: bold; color: var(--brand-color); margin-bottom: 30px; }
+
+    /* Khối bọc thanh tìm kiếm chính */
+    .search-wrapper {
+        max-width: 950px;
+        margin: -40px auto 0;
+        position: relative;
+        z-index: 999;
+    }
+
+    .main-search-bar {
+        background: #ffffff;
+        border: 2px solid #b3d1ff;
+        border-radius: 16px;
+        padding: 6px 10px;
+        box-shadow: 0 8px 30px rgba(0, 78, 159, 0.08);
+        display: flex;
+        align-items: center;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .main-search-bar:focus-within {
+        border-color: var(--brand-color);
+        box-shadow: 0 8px 30px rgba(0, 78, 159, 0.15);
+    }
+
+    /* Ô nhập nội dung bên trái */
+    .search-input-group {
+        flex: 2;
+        display: flex;
+        align-items: center;
+        padding-left: 15px;
+    }
+
+    .search-input-group input {
+        border: none;
+        outline: none;
+        width: 100%;
+        padding: 12px 10px;
+        font-size: 15px;
+        color: #333;
+    }
+
+    /* Đường vách ngăn giữa */
+    .search-divider {
+        width: 1px;
+        height: 30px;
+        background-color: #e0e0e0;
+        margin: 0 10px;
+    }
+
+    /* Bộ chọn địa điểm ở giữa */
+    .search-location-group {
+        position: relative;
+        flex: 1;
+    }
+
+    .location-trigger {
+        background: transparent;
+        border: none;
+        width: 100%;
+        padding: 12px 15px;
+        text-align: left;
+        font-size: 15px;
+        color: #777;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .location-dropdown-menu {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        width: 100%;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border: 1px solid #eee;
+        display: none;
+        max-height: 250px;
+        overflow-y: auto;
+        padding: 5px 0;
+        z-index: 1000;
+    }
+
+    .location-dropdown-menu li {
+        padding: 10px 15px;
+        list-style: none;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+
+    .location-dropdown-menu li:hover {
+        background-color: #f0f6ff;
+        color: var(--brand-color);
+    }
+
+    /* Nút tìm kiếm bên phải */
+    .btn-search-submit {
+        background-color: var(--brand-color);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 28px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+    }
+
+    .btn-search-submit:hover {
+        background-color: #003a77;
+    }
+
+    /* Bảng gợi ý chuyên khoa thông minh */
+    .search-suggestions-box {
+        position: absolute;
+        top: 105%;
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        border: 1px solid #eef2f7;
+        padding: 25px;
+        display: none;
+        z-index: 1000;
+    }
+
+    .suggestion-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    /* Grid danh sách chuyên khoa */
+    .specialty-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    @@media (min-width: 576px) { .specialty-grid { grid-template-columns: repeat(4, 1fr); } }
+    @@media (min-width: 992px) { .specialty-grid { grid-template-columns: repeat(8, 1fr); } }
+
+    .specialty-item {
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .specialty-item:hover {
+        transform: translateY(-3px);
+    }
+
+    .specialty-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        background-color: #f4f8fc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        color: var(--brand-color);
+        font-size: 20px;
+        transition: background 0.2s;
+    }
+
+    .specialty-item:hover .specialty-icon-wrapper {
+        background-color: #e2eeff;
+    }
+
+    .specialty-name {
+        font-size: 12px;
+        color: #4a5568;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Tag từ khóa triệu chứng */
+    .symptom-tags-flex {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .symptom-tag {
+        background: #f1f5f9;
+        color: #4a5568;
+        padding: 6px 16px;
+        border-radius: 30px;
+        font-size: 13px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .symptom-tag:hover {
+        background: #e2eeff;
+        color: var(--brand-color);
+        border-color: #cbdcf7;
+    }
+    .card img.card-img-top{
+    border-radius:12px 12px 0 0;
+}
+
+.card{
+    border-radius:12px;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+    transition:.3s;
+}
+
+.section-title{
+    color:#0aa596;
+    font-weight:700;
+}
+
+body{
+    background:#eef8f8;
+}
+/*  THỐNG KÊ  */
+
+.stats-section{
+    background:linear-gradient(135deg,#004E9F,#1E73D8);
+    color:#fff;
+    padding:45px 0;
+}
+
+.stat-item{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+}
+
+.stat-icon{
+    width:70px;
+    height:70px;
+    border:2px solid rgba(255,255,255,.3);
+    border-radius:18px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:32px;
+}
+
+.stat-number{
+    font-size:34px;
+    font-weight:700;
+    line-height:1;
+}
+
+.stat-title{
+    font-size:15px;
+    opacity:.9;
+}
+
+/*  GIỚI THIỆU  */
+
+.about-section{
+    padding:60px 0;
+    background:#F6FAFF;
+}
+
+.about-box{
+    background:white;
+    border-radius:20px;
+    padding:35px;
+    box-shadow:0 10px 30px rgba(0,78,159,.08);
+}
+
+.about-box h4{
+    color:#004E9F;
+    font-weight:700;
+    margin-bottom:20px;
+}
+
+.about-box ul{
+    padding-left:20px;
+}
+
+.about-box li{
+    margin-bottom:14px;
+    color:#555;
+}
+
+.about-box li::marker{
+    color:#004E9F;
+}
+</style>
+
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold text-main">DocConnect</h1>
+                <p class="fs-4">Ứng dụng chăm sóc sức khỏe chủ động 24/7</p>
+                <p class="text-muted">Đặt lịch khám với bác sĩ hàng đầu, tư vấn từ xa và quản lý hồ sơ sức khỏe trọn đời chỉ với vài thao tác.</p>
+                <div class="mt-4">
+                    <button class="btn btn-main btn-lg px-4 me-2">Đặt khám ngay</button>
+                    <button class="btn btn-outline-primary btn-lg px-4">Tìm hiểu thêm</button>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center mt-5 mt-lg-0">
+                <img src="https://via.placeholder.com/400x500?text=DocConnect+App+Mockup" class="img-fluid" alt="DocConnect App">
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container position-relative" style="z-index: 10;">
+    <div class="container search-wrapper">
+        <div class="main-search-bar">
+            <div class="search-input-group">
+                <input type="text" id="mainSearchInput" placeholder="Tìm triệu chứng, chuyên khoa, tên bệnh viện, phòng khám..." autocomplete="off">
+            </div>
+
+            <div class="search-divider"></div>
+
+            <div class="search-location-group" id="locationGroup">
+                <button type="button" class="location-trigger" id="locationBtn">
+                    <span id="selectedLocation">Toàn quốc</span>
+                    <i class="fa-solid fa-chevron-down text-muted small"></i>
+                </button>
+                <ul class="location-dropdown-menu" id="locationMenu">
+                    <li>Toàn quốc</li>
+                    <li>Hà Nội</li>
+                    <li>Hồ Chí Minh</li>
+                    <li>Đà Nẵng</li>
+                    <li>Thanh Hóa</li>
+                    <li>Ninh Bình</li>
+                    <li>Quảng Ngãi</li>
+                    <li>Khánh Hòa</li>
+                    <li>Bình Dương</li>
+                    <li>Bà Rịa - Vũng Tàu</li>
+                </ul>
+            </div>
+
+            <button type="button" class="btn-search-submit">
+                <span>Tìm kiếm</span>
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </div>
+
+        <div class="search-suggestions-box" id="suggestionsBox">
+            <div class="suggestion-title">Gợi ý chuyên khoa</div>
+            <div class="specialty-grid">
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-stethoscope"></i></div>
+                    <div class="specialty-name">Chẩn Đoán</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-user-injured"></i></div>
+                    <div class="specialty-name">Chấn thương</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-bone"></i></div>
+                    <div class="specialty-name">Cơ Xương</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-hand-holding-medical"></i></div>
+                    <div class="specialty-name">Da Liễu</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-apple-whole"></i></div>
+                    <div class="specialty-name">Dinh dưỡng</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="specialty-name">Gan mật</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-lungs"></i></div>
+                    <div class="specialty-name">Hô hấp</div>
+                </div>
+                <div class="specialty-item">
+                    <div class="specialty-icon-wrapper"><i class="fa-solid fa-eye"></i></div>
+                    <div class="specialty-name">Mắt</div>
+                </div>
+            </div>
+
+            <div class="suggestion-title">Triệu chứng phổ biến</div>
+            <div class="symptom-tags-flex">
+                <a href="#" class="symptom-tag">đau thắt lưng</a>
+                <a href="#" class="symptom-tag">mụn trứng cá</a>
+                <a href="#" class="symptom-tag">sốt xuất huyết</a>
+                <a href="#" class="symptom-tag">trẻ ốm sốt</a>
+                <a href="#" class="symptom-tag">ho khan</a>
+                <a href="#" class="symptom-tag">đau nửa đầu</a>
+            </div>
+        </div>
+    </div>
 </div>
+
+<section class="py-5 mt-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="service-card">
+                    <i class="fa-solid fa-video"></i>
+                    <h6>Bác sĩ tư vấn từ xa</h6>
+                    <p class="small text-muted">Khám qua video call mọi lúc mọi nơi</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="service-card">
+                    <i class="fa-solid fa-hospital"></i>
+                    <h6>Khám tại CS y tế</h6>
+                    <p class="small text-muted">Đặt khám ưu tiên tại bệnh viện</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="service-card">
+                    <i class="fa-solid fa-comments"></i>
+                    <h6>Hỏi đáp bác sĩ</h6>
+                    <p class="small text-muted">Chat ẩn danh với chuyên gia</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="service-card">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <h6>Hồ sơ sức khỏe</h6>
+                    <p class="small text-muted">Quản lý kết quả khám trọn đời</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5" style="background:#eef8f8;">
+    <div class="container">
+
+        <div class="row">
+
+            <!--  CƠ SỞ Y TẾ  -->
+            <div class="col-lg-8">
+
+                <h3 class="section-title mb-4">Cơ sở y tế hàng đầu</h3>
+
+                <div class="row g-4">
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <img src="/images/csyt/bv304.jpg"
+                                 class="card-img-top"
+                                 style="height:220px;object-fit:cover;">
+                            <div class="card-body text-center">
+                                <h5 class="fw-bold">
+                                    Bệnh Viện Công An 30-4
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <img src="/images/csyt/hump.jpg"
+                                 class="card-img-top"
+                                 style="height:220px;object-fit:cover;">
+                            <div class="card-body text-center">
+                                <h5 class="fw-bold">
+                                    Bệnh viện Đại học Y Dược
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <img src="/images/csyt/bv198.jpg"
+                                 class="card-img-top"
+                                 style="height:220px;object-fit:cover;">
+                            <div class="card-body text-center">
+                                <h5 class="fw-bold">
+                                    Bệnh Viện 19-8 Bộ Công An
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <img src="/images/csyt/mediplus.jpg"
+                                 class="card-img-top"
+                                 style="height:220px;object-fit:cover;">
+                            <div class="card-body text-center">
+                                <h5 class="fw-bold">
+                                    Tổ Hợp Phòng Khám MEDIPLUS
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="text-center mt-3">
+                    <a asp-controller="CoSoYTe" asp-action="Index" class="text-decoration-none fw-bold">
+                        Xem tất cả cơ sở y tế →
+                    </a>
+                </div>
+
+            </div>
+
+            <!--  BÁC SĨ  -->
+
+            <div class="col-lg-4">
+
+                <h3 class="section-title mb-4">
+                    Bác sĩ nổi bật
+                </h3>
+
+                @if (Model != null)
+                {
+                    @foreach (var doctor in Model.Take(4))
+                    {
+                        <div class="card shadow-sm border-0 mb-3">
+
+                            <div class="card-body">
+
+                                <div class="d-flex">
+
+                                    <img src="@doctor.AnhDaiDien"
+                                         class="rounded-circle me-3"
+                                         style="width:70px;height:70px;object-fit:cover;">
+
+                                    <div>
+
+                                        <h6 class="fw-bold mb-1">
+                                            @doctor.HoTen
+                                        </h6>
+
+                                        <div class="small text-muted mb-1">
+                                            <i class="fa fa-user-md"></i>
+                                            BS
+                                        </div>
+
+                                        <div class="small text-success mb-1">
+                                            @doctor.TenChuyenKhoa
+                                        </div>
+
+                                        <div class="small text-muted">
+                                            @doctor.KinhNghiem
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+
+                <div class="text-center mt-3">
+                    <a  asp-controller="BacSi" asp-action="Index"
+                       class="text-decoration-none fw-bold">
+                        Xem tất cả bác sĩ →
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+<section class="stats-section">
+
+    <div class="container">
+
+        <div class="row text-center gy-4">
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="stat-item">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </div>
+
+                    <div class="text-start">
+
+                        <div class="stat-title">
+                            Đồng hành cùng
+                        </div>
+
+                        <div class="stat-number">
+                            500+
+                        </div>
+
+                        <div>
+                            Bác sĩ
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="stat-item">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-hospital"></i>
+                    </div>
+
+                    <div class="text-start">
+
+                        <div class="stat-title">
+                            Hợp tác với
+                        </div>
+
+                        <div class="stat-number">
+                            100+
+                        </div>
+
+                        <div>
+                            Cơ sở y tế
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="stat-item">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <div class="text-start">
+
+                        <div class="stat-title">
+                            Người sử dụng
+                        </div>
+
+                        <div class="stat-number">
+                            20.000+
+                        </div>
+
+                        <div>
+                            Thành viên
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+
+                <div class="stat-item">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+
+                    <div class="text-start">
+
+                        <div class="stat-title">
+                            Lượt đặt khám
+                        </div>
+
+                        <div class="stat-number">
+                            80.000+
+                        </div>
+
+                        <div>
+                            Thành công
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<section class="about-section">
+
+    <div class="container">
+
+        <div class="about-box">
+
+            <h4>
+                DocConnect – Nền tảng chăm sóc sức khỏe trực tuyến
+            </h4>
+
+            <ul>
+
+                <li>
+                    Đặt lịch khám nhanh với bác sĩ và cơ sở y tế trên toàn quốc.
+                </li>
+
+                <li>
+                    Tư vấn sức khỏe trực tuyến thông qua Video Call mọi lúc, mọi nơi.
+                </li>
+
+                <li>
+                    Quản lý hồ sơ sức khỏe cá nhân và lịch sử khám bệnh tập trung.
+                </li>
+
+                <li>
+                    Theo dõi lịch hẹn, kết quả khám và đơn thuốc điện tử.
+                </li>
+
+                <li>
+                    Hệ thống tìm kiếm bác sĩ theo chuyên khoa, bệnh viện hoặc địa phương.
+                </li>
+
+                <li>
+                    Hỗ trợ đặt lịch nhanh, giảm thời gian chờ tại cơ sở y tế.
+                </li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</section>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("mainSearchInput");
+        const suggestionsBox = document.getElementById("suggestionsBox");
+        const locationBtn = document.getElementById("locationBtn");
+        const locationMenu = document.getElementById("locationMenu");
+        const selectedLocation = document.getElementById("selectedLocation");
+
+        // 1. Logic ẩn hiện bảng Gợi ý chuyên khoa
+        searchInput.addEventListener("focus", function () {
+            suggestionsBox.style.display = "block";
+            locationMenu.style.display = "none"; 
+        });
+
+        // 2. Logic ẩn hiện danh sách Chọn địa điểm
+        locationBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const isMenuOpen = locationMenu.style.display === "block";
+            locationMenu.style.display = isMenuOpen ? "none" : "block";
+            suggestionsBox.style.display = "none"; 
+        });
+
+        // 3. Logic khi lựa chọn một Tỉnh/Thành phố cụ thể
+        const locationItems = locationMenu.getElementsByTagName("li");
+        for (let item of locationItems) {
+            item.addEventListener("click", function (e) {
+                selectedLocation.innerText = this.innerText;
+                locationMenu.style.display = "none";
+                e.stopPropagation();
+            });
+        }
+
+        // 4. Logic nhấp vào thẻ triệu chứng/chuyên khoa đưa chữ lên thanh tìm kiếm
+        document.querySelectorAll(".symptom-tag, .specialty-item").forEach(item => {
+            item.addEventListener("click", function (e) {
+                e.preventDefault();
+                const text = this.querySelector(".specialty-name") ? this.querySelector(".specialty-name").innerText : this.innerText;
+                searchInput.value = text;
+                suggestionsBox.style.display = "none";
+            });
+        });
+
+        // 5. Click ra ngoài vùng tìm kiếm thì tự động đóng tất cả bảng dropdown
+        document.addEventListener("click", function (e) {
+            if (!e.target.closest(".search-wrapper")) {
+                suggestionsBox.style.display = "none";
+                locationMenu.style.display = "none";
+            }
+        });
+    });
+</script>

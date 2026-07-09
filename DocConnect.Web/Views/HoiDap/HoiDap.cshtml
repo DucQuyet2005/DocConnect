@@ -1,0 +1,471 @@
+@model IEnumerable<DocConnect.Web.Models.Entities.HoiDap>
+
+@{
+    ViewData["Title"] = "Hỏi đáp miễn phí với Bác sĩ";
+}
+
+<style>
+    :root {
+        --brand-color: #004E9F;
+        --brand-light: #eef5ff;
+    }
+
+    /* Section Banner Tìm Kiếm Câu Hỏi */
+    .hoidap-banner {
+        background: linear-gradient(rgba(238, 245, 255, 0.9), rgba(255, 255, 255, 0.95)), 
+                    url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070') center/cover;
+        padding: 50px 0;
+        text-align: center;
+    }
+
+    .hoidap-search-box {
+        max-width: 700px;
+        margin: 20px auto;
+        position: relative;
+    }
+
+    .hoidap-search-box input {
+        width: 100%;
+        padding: 14px 50px 14px 25px;
+        border: 2px solid #b3d1ff;
+        border-radius: 30px;
+        outline: none;
+        font-size: 16px;
+        box-shadow: 0 4px 15px rgba(0, 78, 159, 0.05);
+        transition: all 0.3s;
+    }
+
+    .hoidap-search-box input:focus {
+        border-color: var(--brand-color);
+        box-shadow: 0 4px 20px rgba(0, 78, 159, 0.15);
+    }
+
+    .hoidap-search-box i {
+        position: absolute;
+        right: 25px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--brand-color);
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    /* Chuyên khoa nhanh */
+    .quick-tags-flex {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .quick-tag-item {
+        background: white;
+        border: 1px solid #ddd;
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-size: 13px;
+        color: #444;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .quick-tag-item:hover, .quick-tag-item.active {
+        background-color: var(--brand-light);
+        color: var(--brand-color);
+        border-color: #cbdcf7;
+    }
+
+    /* Khung danh sách câu hỏi bên trái */
+    .qa-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #eef2f6;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+
+    .qa-user-info {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+    }
+
+    .qa-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #222;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .badge-specialty {
+        background-color: var(--brand-light);
+        color: var(--brand-color);
+        font-weight: 500;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        text-decoration: none;
+    }
+
+    .qa-meta {
+        font-size: 13px;
+        color: #888;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .action-btn-doctor {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 20px;
+        transition: 0.2s;
+    }
+
+    /* Form Đặt Câu Hỏi bên phải */
+    .sticky-form-box {
+        position: sticky;
+        top: 90px; 
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #eef2f7;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        padding: 25px;
+    }
+
+    .form-box-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-upload-img {
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-upload-img:hover {
+        border-color: var(--brand-color);
+        background-color: var(--brand-light);
+        color: var(--brand-color);
+    }
+
+    .btn-submit-question {
+        background-color: var(--brand-color);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        width: 100%;
+        transition: background 0.2s;
+    }
+
+    .btn-submit-question:hover {
+        background-color: #003a77;
+    }
+
+    /* Phân trang */
+    .custom-pagination .page-link {
+        color: var(--brand-color);
+        border: 1px solid #e2e8f0;
+        margin: 0 3px;
+        border-radius: 6px;
+    }
+
+    .custom-pagination .page-item.active .page-link {
+        background-color: var(--brand-color);
+        border-color: var(--brand-color);
+        color: white;
+    }
+</style>
+
+<section class="hoidap-banner">
+    <div class="container">
+        <h2 class="fw-bold text-dark mb-2">Hỏi đáp miễn phí với Bác sĩ</h2>
+        <div class="hoidap-search-box">
+            <input type="text" placeholder="Tìm kiếm từ khóa, chủ đề bệnh lý...">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <div class="quick-tags-flex">
+            <a href="#" class="quick-tag-item active">Hô hấp</a>
+            <a href="#" class="quick-tag-item">Chuyên khoa Nội khoa</a>
+            <a href="#" class="quick-tag-item">TT Phẫu Thuật đại trực tràng Tầng sinh môn</a>
+            <a href="#" class="quick-tag-item">Chuyên khoa Sản</a>
+            <a href="#" class="quick-tag-item">Chuyên khoa Nội Nhi</a>
+            <a href="#" class="quick-tag-item">Chuyên khoa Phụ Khoa</a>
+            <a href="#" class="quick-tag-item"><i class="fa-solid fa-grid-2"></i> Xem thêm</a>
+        </div>
+    </div>
+</section>
+
+<div class="container my-5">
+    <div class="row g-4">
+        
+        <div class="col-lg-8">
+            @if (Model != null && Model.Any())
+            {
+                @* 1. Lọc chỉ lấy những bản ghi là CÂU HỎI GỐC (Tiêu đề không có cấu trúc trả lời dạng "RE: [Id]") *@
+                var danhSachCauHoiGoc = Model.Where(h => string.IsNullOrEmpty(h.TieuDe) || !h.TieuDe.StartsWith("RE: "));
+
+                @foreach (var item in danhSachCauHoiGoc)
+                {
+                    @* 2. Lọc các câu trả lời tương ứng của câu hỏi gốc này dựa trên TieuDe liên kết *@
+                    var danhSachCauTraLoi = Model.Where(h => h.TieuDe == $"RE: {item.Id}").OrderBy(h => h.NgayTao).ToList();
+
+                    <div class="qa-card" id="question-box-@item.Id">
+                        <div class="qa-user-info">@item.GioiTinh, @item.Tuoi tuổi (Ẩn danh)</div>
+                        
+                        @if (!string.IsNullOrEmpty(item.TieuDe))
+                        {
+                            <div class="qa-title fw-bold mb-1" style="color: var(--brand-color);">@item.TieuDe</div>
+                        }
+                        
+                        <div class="qa-title">@item.NoiDung</div>
+                        
+                        @if (!string.IsNullOrEmpty(item.DuongDanAnh))
+                        {
+                            <div class="mb-3">
+                                <img src="@item.DuongDanAnh" alt="Ảnh triệu chứng" class="img-fluid rounded" style="max-height: 150px; border: 1px solid #ddd;">
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top border-light">
+                            <div>
+                                <a href="#" class="badge-specialty">Chuyên khoa</a>
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="qa-meta">
+                                    <span><i class="fa-regular fa-clock me-1"></i> @item.NgayTao.ToString("dd/MM/yyyy")</span>
+                                    <span><i class="fa-regular fa-comment me-1"></i> <span id="comment-count-@item.Id">@danhSachCauTraLoi.Count</span> Trả lời</span>
+                                    <span><i class="fa-regular fa-thumbs-up me-1"></i> <span id="like-count-@item.Id">0</span> Cảm ơn</span>
+                                </div>
+
+                                @if (User.Identity.IsAuthenticated && User.IsInRole("Doctor"))
+                                {
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger action-btn-doctor" onclick="thaTimCauHoi(@item.Id)">
+                                            <i class="fa-solid fa-heart me-1"></i> Thả tim
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-primary action-btn-doctor" style="background-color: var(--brand-color); border:none;" 
+                                                data-bs-toggle="collapse" data-bs-target="#collapseReply-@item.Id">
+                                            <i class="fa-solid fa-reply me-1"></i> Trả lời
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="qa-answers-list mt-3" id="answers-container-@item.Id">
+                            @if (danhSachCauTraLoi.Any())
+                            {
+                                @foreach (var traLoi in danhSachCauTraLoi)
+                                {
+                                    <div class="p-3 mb-2 rounded-3" style="background-color: #f8fafc; border-left: 4px solid var(--brand-color);">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="fw-bold text-dark small">
+                                                <i class="fa-solid fa-user-md text-primary me-1"></i> 
+                                                Bác sĩ tư vấn
+                                            </span>
+                                            <span class="text-muted" style="font-size: 11px;">@traLoi.NgayTao.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        <div class="text-secondary small" style="white-space: pre-line;">@traLoi.NoiDung</div>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        @if (User.Identity.IsAuthenticated && User.IsInRole("Doctor"))
+                        {
+                            <div class="collapse mt-3" id="collapseReply-@item.Id">
+                                <div class="card card-body bg-light border-0 rounded-3 p-3">
+                                    <h6 class="fw-bold mb-2 text-dark small"><i class="fa-solid fa-user-md me-1 text-primary"></i> Viết câu trả lời tư vấn chuyên môn:</h6>
+                                    <textarea id="txtReplyContent-@item.Id" class="form-control mb-2" rows="3" placeholder="Mô tả lời khuyên, chẩn đoán sơ bộ hoặc hướng xử lý bệnh lý..."></textarea>
+                                    <div class="text-end">
+                                        <button type="button" class="btn btn-sm btn-success px-3 rounded-pill fw-semibold" onclick="guiCauTraLoi(@item.Id)">
+                                            Gửi câu trả lời
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info text-center">Chưa có câu hỏi nào được đăng tải. Hãy là người đầu tiên đặt câu hỏi!</div>
+            }
+
+            <nav class="mt-4">
+                <ul class="pagination custom-pagination justify-content-start">
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="fa-solid fa-chevron-left"></i></a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">4</a></li>
+                    <li class="page-item"><a class="page-link" href="#">5</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    <li class="page-item"><a class="page-link" href="#">4994</a></li>
+                    <li class="page-item"><a class="page-link" href="#"><i class="fa-solid fa-chevron-right"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sticky-form-box">
+                <div class="form-box-title">Đặt câu hỏi với bác sĩ</div>
+                
+                <form asp-controller="HoiDap" asp-action="DangCauHoi" method="post" enctype="multipart/form-data">
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"> 
+                            <label class="form-label small fw-semibold">Tuổi <span class="text-danger">*</span></label>
+                            <input type="number" name="Tuoi" class="form-control" required placeholder="Ví dụ: 25">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Giới tính</label>
+                            <div class="d-flex gap-3 pt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="GioiTinh" id="nam" value="Nam" checked>
+                                    <label class="form-check-label small" for="nam">Nam</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="GioiTinh" id="nu" value="Nữ">
+                                    <label class="form-check-label small" for="nu">Nữ</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Chọn chuyên khoa</label>
+                        <select class="form-select" name="ChuyenKhoaId">
+                            <option value="">-- Chọn chuyên khoa phù hợp --</option>
+                            <option value="1">Nội tổng hợp</option>
+                            <option value="2">Nội Nhi</option>
+                            <option value="3">Sản phụ khoa</option>
+                            <option value="4">Chấn thương chỉnh hình</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Tiêu đề ngắn</label>
+                        <input type="text" name="TieuDe" class="form-control" placeholder="Ví dụ: Mọc mụn nước ở lòng bàn tay">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Nội dung câu hỏi <span class="text-danger">*</span></label>
+                        <textarea name="NoiDung" class="form-control" rows="4" required placeholder="Mô tả kỹ triệu chứng để bác sĩ tư vấn tốt nhất cho bạn nhé."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="btn-upload-img" onclick="document.getElementById('uploadFile').click();">
+                            <i class="fa-regular fa-image fa-2xl mb-2 d-block"></i>
+                            <span class="small fw-medium">Thêm ảnh triệu chứng hoặc kết quả xét nghiệm</span> 
+                            <input type="file" name="FileAnh" accept="image/*" class="d-none" id="uploadFile">
+                        </div>
+                    </div>
+
+                    <p class="text-muted text-center" style="font-size: 12px;">* Câu hỏi của bạn sẽ được ẩn danh và hiển thị công khai trên cộng đồng sau khi duyệt.</p>
+
+                    <button type="submit" class="btn btn-submit-question shadow-sm">GỬI CÂU HỎI</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function thaTimCauHoi(id) {
+        $.ajax({
+            url: '/HoiDap/ThaTimAjax',
+            type: 'POST',
+            data: { id: id },
+            success: function (response) {
+                if (response.success) {
+                    alert(response.message);
+                    let currentLikes = parseInt($('#like-count-' + id).text());
+                    $('#like-count-' + id).text(currentLikes + 1);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Đã xảy ra lỗi hệ thống khi thả tim.');
+            }
+        });
+    }
+
+    function guiCauTraLoi(id) {
+        let answerText = $('#txtReplyContent-' + id).val();
+
+        if (!answerText.trim()) {
+            alert('Vui lòng điền nội dung câu trả lời tư vấn!');
+            return;
+        }
+
+        $.ajax({
+            url: '/HoiDap/TraLoiAjax',
+            type: 'POST',
+            data: { 
+                id: id,
+                noiDungTraLoi: answerText
+            },
+            success: function (response) {
+                if (response.success) {
+                    alert(response.message);
+                    
+                    // Xóa trắng vùng nhập và ẩn khung gõ
+                    $('#txtReplyContent-' + id).val('');
+                    $('#collapseReply-' + id).collapse('hide');
+
+                    // Cập nhật giao diện theo thời gian thực (Render động câu trả lời mới vừa lưu vào cây DOM)
+                    let now = new Date();
+                    let timeStr = ("0" + now.getDate()).slice(-2) + "/" + ("0" + (now.getMonth() + 1)).slice(-2) + "/" + now.getFullYear() + " " + ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2);
+                    
+                    let htmlNewAnswer = `
+                        <div class="p-3 mb-2 rounded-3" style="background-color: #f8fafc; border-left: 4px solid var(--brand-color);">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-bold text-dark small">
+                                    <i class="fa-solid fa-user-md text-primary me-1"></i> 
+                                    Bác sĩ tư vấn
+                                </span>
+                                <span class="text-muted" style="font-size: 11px;">${timeStr}</span>
+                            </div>
+                            <div class="text-secondary small" style="white-space: pre-line;">${answerText}</div>
+                        </div>
+                    `;
+                    
+                    // Kéo câu trả lời mới hiển thị lên ngay lập tức
+                    $('#answers-container-' + id).append(htmlNewAnswer);
+
+                    // Tăng số lượng đếm câu trả lời lên +1
+                    let currentComments = parseInt($('#comment-count-' + id).text());
+                    $('#comment-count-' + id).text(currentComments + 1);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Đã xảy ra lỗi khi gửi dữ liệu tư vấn.');
+            }
+        });
+    }
+</script>

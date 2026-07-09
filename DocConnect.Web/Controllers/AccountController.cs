@@ -1,0 +1,134 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
+using DocConnect.Web.Data;
+using DocConnect.Web.Models.Entities;
+using DocConnect.Web.Models.ViewModels;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Collections.Generic;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace DocConnect.Web.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly DocConnectDbContext _context;
+        // Sử dụng trực tiếp NguoiDung làm kiểu Generic thay vì string để tối ưu hóa việc băm mật khẩu
+        private readonly PasswordHasher<NguoiDung> _passwordHasher;
+
+        public AccountController(DocConnectDbContext context)
+        {
+            _context = context;
+            _passwordHasher = new PasswordHasher<NguoiDung>();
+        }
+
+        // GET: /Account/Register
+        [HttpGet]
+        public IActionResult Register()
+        {
+            // Nếu người dùng đã đăng nhập thì chuyển hướng về Trang chủ luôn
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Register(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var emailExists = _context.NguoiDungs.Any(u => u.Email == model.Email);
+                if (emailExists)
+                {
+                    ModelState.AddModelError("Email", "Email này đã được đăng ký sử dụng.");
+                    return View(model);
+                }
+
+                var user = new NguoiDung
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    HoTen = model.HoTen,
+                    Email = model.Email,
+                    SoDienThoai = model.SoDienThoai ?? "",
+                    VaiTro = model.VaiTro,
+                    TrangThai = model.VaiTro != "Doctor", 
+                    NgayTao = DateTime.Now,
+                    AnhDaiDien = "/images/default-avatar.png"
+                };
+                user.MatKhauHash = _passwordHasher.HashPassword(user, model.MatKhau);
+
+                _context.NguoiDungs.Add(user);
+                _context.SaveChanges();
+                TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
+                return RedirectToAction("Login");
+            }
+            return View(model);
+        }
+        [HttpGet]
+        public IActionResult Login()
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = _context.NguoiDungs.FirstOrDefault(u => u.Email == model.Email);
+                if (user != null)
+                {
+                    //if (user.TrangThai == false || !user.TrangThai.HasValue)
+                    //{
+                    //    ModelState.AddModelError("", "Tài khoản của bạn hiện đang bị khóa hoặc đang chờ ban quản trị phê duyệt.");
+                    //    return View(model);
+                    //}
+                    var verifyResult = _passwordHasher.VerifyHashedPassword(user, user.MatKhauHash, model.MatKhau);
+                    if (verifyResult == PasswordVerificationResult.Success)
+                    {
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, user.Id),
+                            new Claim(ClaimTypes.Name, user.HoTen),
+                            new Claim(ClaimTypes.Email, user.Email),
+                            new Claim(ClaimTypes.Role, user.VaiTro)
+                        };
+
+                        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        var authProperties = new AuthenticationProperties 
+                        {
+                            IsPersistent = model.GhiNho,
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                        };
+                        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+
+                        return RedirectToAction("Index", "Home");
+                    }
+                }
+                ModelState.AddModelError("", "Email hoặc mật khẩu không chính xác.");
+            }
+            return View(model);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login", "Account");
+        }
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+    }
+}
