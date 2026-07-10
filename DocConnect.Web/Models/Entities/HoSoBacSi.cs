@@ -1,5 +1,7 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DocConnect.Models.Entities; // Hoặc namespace chứa NguoiDung tùy dự án của bạn
 
 namespace DocConnect.Web.Models.Entities
 {
@@ -15,9 +17,11 @@ namespace DocConnect.Web.Models.Entities
         public string? KinhNghiem { get; set; }
         public string? GioiThieu { get; set; }
         public string? DuongDanChungChi { get; set; }
-        public bool TrangThaiXacThuc { get; set; }
 
-        // --- KHAI BÁO LIÊN KẾT ĐỂ SỬA LỖI ---
+        // === ĐÃ SỬA LỖI: Chuyển đổi từ bool sang string? để khớp với SQL Server ===
+        public string? TrangThaiXacThuc { get; set; }
+
+        // --- KHAI BÁO LIÊN KẾT ---
         [ForeignKey("NguoiDungId")]
         public virtual NguoiDung NguoiDung { get; set; } = null!;
 

@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using DocConnect.Web.Data;
 
 namespace DocConnect.Web.Models.Entities
 {
@@ -32,7 +31,8 @@ namespace DocConnect.Web.Models.Entities
         public bool DaDuyet { get; set; } = false;
 
         public bool AnDanh { get; set; } = true;
+
         [ForeignKey("NguoiDungId")]
-public virtual DocConnectDbContext? NguoiDung { get; set; }
+        public virtual NguoiDung? NguoiDung { get; set; } // Đã sửa từ DocConnectDbContext thành NguoiDung
     }
 }

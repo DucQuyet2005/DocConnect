@@ -1,0 +1,190 @@
+@model DocConnect.Web.Models.Entities.PhienTuVan
+
+@{
+    ViewData["Title"] = "Phòng Tư Vấn Trực Tuyến";
+    var lichSuTinNhan = ViewBag.LichSuTinNhan as List<DocConnect.Web.Models.Entities.TinNhan> ?? new List<DocConnect.Web.Models.Entities.TinNhan>();
+    var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+<style>
+    .chat-container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        height: 70vh;
+    }
+    .chat-header {
+        background: #004E9F;
+        color: white;
+        padding: 15px 20px;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        font-weight: bold;
+    }
+    .chat-body {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .msg-wrapper {
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+    }
+    .msg-wrapper.me {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+    .msg-wrapper.other {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+    .msg-bubble {
+        padding: 10px 16px;
+        border-radius: 18px;
+        font-size: 15px;
+        word-break: break-word;
+    }
+    .me .msg-bubble {
+        background: #004E9F;
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+    .other .msg-bubble {
+        background: #e9ecef;
+        color: #333;
+        border-bottom-left-radius: 2px;
+    }
+    .msg-meta {
+        font-size: 11px;
+        color: #888;
+        margin-top: 3px;
+        padding: 0 5px;
+    }
+    .chat-footer {
+        padding: 15px 20px;
+        background: #fff;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        border-top: 1px solid #eee;
+    }
+</style>
+
+<div class="container">
+    <div class="chat-container">
+        <div class="chat-header d-flex justify-content-between align-items-center">
+            <span>Phiên tư vấn số: #@Model.Id - Trạng thái: @Model.TrangThai</span>
+            <a href="/BacSi" class="btn btn-sm btn-outline-light text-decoration-none">Thoát phòng</a>
+        </div>
+
+        <div class="chat-body" id="chatBody">
+            @foreach (var msg in lichSuTinNhan)
+            {
+                var isMe = msg.NguoiGuiId == currentUserId;
+                <div class="msg-wrapper @(isMe ? "me" : "other")">
+                    <div class="msg-bubble">
+                        @msg.NoiDung
+                    </div>
+                    <div class="msg-meta">
+                        @msg.ThoiGianGui.ToString("HH:mm")
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="chat-footer">
+            <div class="input-group">
+                <input type="text" id="txtNoiDung" class="form-control" placeholder="Nhập nội dung tin nhắn..." aria-label="Nội dung">
+                <button class="btn btn-primary px-4" type="button" id="btnGui">
+                    Gửi <i class="fa-solid fa-paper-plane ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Tự động cuộn khung chat xuống đáy khi vừa load xong trang
+            cuonKhungChatXuongDay();
+
+            // Hành động 1: Click nút Gửi
+            $('#btnGui').click(function () {
+                thucHienGuiTinNhan();
+            });
+
+            // Hành động 2: Nhấn nút Enter trên bàn phím trong ô nhập liệu
+            $('#txtNoiDung').keypress(function (e) {
+                if (e.which == 13) { // Phím Enter mã là 13
+                    thucHienGuiTinNhan();
+                }
+            });
+
+            // Hàm xử lý đẩy AJAX lên TinNhanController
+            function thucHienGuiTinNhan() {
+                var noiDungText = $('#txtNoiDung').val().trim();
+                
+                // Nếu chuỗi nhập trống không xử lý gửi tránh rác database
+                if (noiDungText === '') {
+                    return;
+                }
+
+                $.ajax({
+                    url: '/TinNhan/GuiTinNhanAjax',
+                    type: 'POST',
+                    data: {
+                        phienId: @Model.Id,
+                        noiDung: noiDungText
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            // Tạo cấu trúc thẻ HTML chứa tin nhắn vừa gửi xong
+                            var htmlTinNhanMoi = `
+                                <div class="msg-wrapper me">
+                                    <div class="msg-bubble">
+                                        ${res.noiDung}
+                                    </div>
+                                    <div class="msg-meta">
+                                        ${res.thoiGian}
+                                    </div>
+                                </div>
+                            `;
+
+                            // Chèn phần tử tin nhắn mới vào đáy danh sách hiện có
+                            $('#chatBody').append(htmlTinNhanMoi);
+
+                            // Xóa sạch chữ trong ô nhập để sẵn sàng gõ câu tiếp theo
+                            $('#txtNoiDung').val('');
+
+                            // Cuộn mượt khung hình xuống dưới
+                            cuonKhungChatXuongDay();
+                        } else {
+                            alert("Lỗi gửi tin nhắn: " + res.message);
+                        }
+                    },
+                    error: function () {
+                        alert("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại cấu hình Route.");
+                    }
+                });
+            }
+
+            // Hàm hỗ trợ cuộn thanh scroll luôn ở dưới cùng
+            function cuonKhungChatXuongDay() {
+                var chatBody = document.getElementById("chatBody");
+                if (chatBody) {
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }
+            }
+        });
+    </script>
+}

@@ -17,6 +17,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -34,5 +35,9 @@ app.UseStaticFiles(); // Kích hoạt đọc file tĩnh như hình ảnh, CSS
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+
+// ĐẶT MAP HUB Ở ĐÂY (Sau UseAuthorization)
+app.MapHub<DocConnect.Web.Hubs.ChatHub>("/chatHub");
 
 app.Run();

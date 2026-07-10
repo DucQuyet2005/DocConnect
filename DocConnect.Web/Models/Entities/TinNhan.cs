@@ -1,8 +1,10 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DocConnect.Web.Models.Entities
 {
+    [Table("TinNhan")] // Ép EF Core map chính xác vào bảng TinNhan trong SQL
     public class TinNhan
     {
         [Key]
