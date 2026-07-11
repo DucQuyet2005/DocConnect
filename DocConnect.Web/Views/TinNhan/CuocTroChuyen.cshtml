@@ -156,25 +156,23 @@
             }
         }
 
-        connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
-        const isMe = (senderId === currentUserId);
-            
-            // Sử dụng class .msg-wrapper, .msg-bubble như vòng lặp ở trên
-            // Chúng ta tạo nội dung giống hệt cấu trúc phía trên
-            let html = `
-                <div class="msg-wrapper ${isMe ? 'me' : 'other'}">
-                    <div class="msg-bubble">
-                        ${message}
-                    </div>
-                    <div class="msg-meta">
-                        ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                </div>
-            `;
-            
-            $('#chatBody').append(html);
-            cuonKhungChatXuongDay();
-        });
+connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
+    const isMe = (senderId === currentUserId);
+    
+    let html = `
+        <div class="msg-wrapper ${isMe ? 'me' : 'other'}">
+            <div class="msg-bubble">
+                ${message}
+            </div>
+            <div class="msg-meta">
+                ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+        </div>
+    `; 
+    
+    $('#chatBody').append(html);
+    cuonKhungChatXuongDay();
+});
 
         connection.start().then(() => {
             connection.invoke("JoinRoom", currentPhienId);
