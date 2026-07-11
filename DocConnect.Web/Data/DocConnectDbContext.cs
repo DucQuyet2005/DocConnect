@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using DocConnect.Models.Entities;
 using DocConnect.Web.Models.Entities;
 using DocConnect.Web.Models;
 
@@ -22,7 +21,6 @@ namespace DocConnect.Web.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Ép buộc EF Core giữ nguyên tên bảng số ít khớp chính xác database
             modelBuilder.Entity<NguoiDung>().ToTable("NguoiDung");
             modelBuilder.Entity<HoiDap>().ToTable("HoiDap");
             modelBuilder.Entity<HoSoBacSi>().ToTable("HoSoBacSi");

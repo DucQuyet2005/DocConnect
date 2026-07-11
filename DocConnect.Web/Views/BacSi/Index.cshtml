@@ -141,10 +141,13 @@
                             </div>
                             
                             <div>
-                                <a href="/TinNhan/CuocTroChuyen/@dr.Id" class="btn-chat-dr shadow-sm">
-                                    <i class="fa-solid fa-comment-dots"></i>
-                                    <span>Nhắn tin tư vấn</span>
-                                </a>
+                                    <form asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="d-inline m-0">
+                                        <input type="hidden" name="bacSiId" value="@dr.Id" />
+                                    <button type="submit" class="btn-chat-dr shadow-sm">
+                                        <i class="fa-solid fa-comment-dots"></i>
+                                        <span>Nhắn tin tư vấn</span>
+                                        </button>
+                                    </form>
                             </div>
                         </div>
                     </div>

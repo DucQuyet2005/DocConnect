@@ -116,7 +116,7 @@ namespace DocConnect.Web.Controllers
         public async Task<IActionResult> TraLoiAjax(int id, string noiDungTraLoi)
         {
             // 1. Kiểm tra quyền Doctor
-            if (!User.Identity.IsAuthenticated || !User.IsInRole("Doctor"))
+            if (User.Identity?.IsAuthenticated != true || !User.IsInRole("Doctor"))
             {
                 return Json(new { success = false, message = "Chỉ bác sĩ mới có quyền trả lời!" });
             }

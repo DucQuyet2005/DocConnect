@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DocConnect.Web.Data;
+using DocConnect.Web.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
+
 
 var app = builder.Build();
 
@@ -38,6 +42,6 @@ app.MapControllerRoute(
 
 
 // ĐẶT MAP HUB Ở ĐÂY (Sau UseAuthorization)
-app.MapHub<DocConnect.Web.Hubs.ChatHub>("/chatHub");
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

@@ -53,6 +53,11 @@
         font-size: 15px;
         word-break: break-word;
     }
+    .msg-image {
+        max-width: 280px;
+        border-radius: 14px;
+        display: block;
+    }
     .me .msg-bubble {
         background: #004E9F;
         color: white;
@@ -85,13 +90,24 @@
             <a href="/BacSi" class="btn btn-sm btn-outline-light text-decoration-none">Thoát phòng</a>
         </div>
 
+        <div class="chat-subheader p-2 bg-light border-bottom text-center">
+            <strong>Đang tư vấn với: @ViewBag.TenDoiPhuong</strong>
+        </div>
+        
         <div class="chat-body" id="chatBody">
             @foreach (var msg in lichSuTinNhan)
             {
                 var isMe = msg.NguoiGuiId == currentUserId;
                 <div class="msg-wrapper @(isMe ? "me" : "other")">
                     <div class="msg-bubble">
-                        @msg.NoiDung
+                        @if (msg.LoaiTinNhan == "Image")
+                        {
+                            <img src="@msg.NoiDung" alt="Tin nhắn hình ảnh" class="msg-image" />
+                        }
+                        else
+                        {
+                            @msg.NoiDung
+                        }
                     </div>
                     <div class="msg-meta">
                         @msg.ThoiGianGui.ToString("HH:mm")
@@ -113,7 +129,73 @@
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
+        const connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+        const currentUserId = "@(ViewBag.CurrentUserId as string ?? string.Empty)";
+        const currentPhienId = @Model.Id;
+        window.__docconnectCurrentChatPhienId = currentPhienId;
+
+        function taoHtmlTinNhan(noiDung, isMe, thoiGian) {
+            return `
+                <div class="msg-wrapper ${isMe ? "me" : "other"}">
+                    <div class="msg-bubble">
+                        ${noiDung}
+                    </div>
+                    <div class="msg-meta">
+                        ${thoiGian ?? ""}
+                    </div>
+                </div>
+            `;
+        }
+
+        function cuonKhungChatXuongDay() {
+            var chatBody = document.getElementById("chatBody");
+            if (chatBody) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+
+        connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
+        const isMe = (senderId === currentUserId);
+            
+            // Sử dụng class .msg-wrapper, .msg-bubble như vòng lặp ở trên
+            // Chúng ta tạo nội dung giống hệt cấu trúc phía trên
+            let html = `
+                <div class="msg-wrapper ${isMe ? 'me' : 'other'}">
+                    <div class="msg-bubble">
+                        ${message}
+                    </div>
+                    <div class="msg-meta">
+                        ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                </div>
+            `;
+            
+            $('#chatBody').append(html);
+            cuonKhungChatXuongDay();
+        });
+
+        connection.start().then(() => {
+            connection.invoke("JoinRoom", currentPhienId);
+        });
+
+        function thucHienGuiTinNhan() {
+            var noiDungText = $('#txtNoiDung').val().trim();
+
+            if (noiDungText === '') {
+                return;
+            }
+
+            connection.invoke("SendMessage", currentPhienId, currentUserId, noiDungText)
+                .then(function () {
+                    $('#txtNoiDung').val('');
+                })
+                .catch(function () {
+                    alert("Không thể gửi tin nhắn. Vui lòng thử lại.");
+                });
+        }
+
         $(document).ready(function () {
             // Tự động cuộn khung chat xuống đáy khi vừa load xong trang
             cuonKhungChatXuongDay();
@@ -130,61 +212,6 @@
                 }
             });
 
-            // Hàm xử lý đẩy AJAX lên TinNhanController
-            function thucHienGuiTinNhan() {
-                var noiDungText = $('#txtNoiDung').val().trim();
-                
-                // Nếu chuỗi nhập trống không xử lý gửi tránh rác database
-                if (noiDungText === '') {
-                    return;
-                }
-
-                $.ajax({
-                    url: '/TinNhan/GuiTinNhanAjax',
-                    type: 'POST',
-                    data: {
-                        phienId: @Model.Id,
-                        noiDung: noiDungText
-                    },
-                    success: function (res) {
-                        if (res.success) {
-                            // Tạo cấu trúc thẻ HTML chứa tin nhắn vừa gửi xong
-                            var htmlTinNhanMoi = `
-                                <div class="msg-wrapper me">
-                                    <div class="msg-bubble">
-                                        ${res.noiDung}
-                                    </div>
-                                    <div class="msg-meta">
-                                        ${res.thoiGian}
-                                    </div>
-                                </div>
-                            `;
-
-                            // Chèn phần tử tin nhắn mới vào đáy danh sách hiện có
-                            $('#chatBody').append(htmlTinNhanMoi);
-
-                            // Xóa sạch chữ trong ô nhập để sẵn sàng gõ câu tiếp theo
-                            $('#txtNoiDung').val('');
-
-                            // Cuộn mượt khung hình xuống dưới
-                            cuonKhungChatXuongDay();
-                        } else {
-                            alert("Lỗi gửi tin nhắn: " + res.message);
-                        }
-                    },
-                    error: function () {
-                        alert("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại cấu hình Route.");
-                    }
-                });
-            }
-
-            // Hàm hỗ trợ cuộn thanh scroll luôn ở dưới cùng
-            function cuonKhungChatXuongDay() {
-                var chatBody = document.getElementById("chatBody");
-                if (chatBody) {
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }
-            }
         });
     </script>
 }

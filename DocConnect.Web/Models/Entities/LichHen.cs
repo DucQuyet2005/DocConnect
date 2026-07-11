@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace DocConnect.Models.Entities
+namespace DocConnect.Web.Models.Entities
 {
     public class LichHen
     {

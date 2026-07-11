@@ -255,7 +255,7 @@
                                     <span><i class="fa-regular fa-thumbs-up me-1"></i> <span id="like-count-@item.Id">0</span> Cảm ơn</span>
                                 </div>
 
-                                @if (User.Identity.IsAuthenticated && User.IsInRole("Doctor"))
+                                @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Doctor"))
                                 {
                                     <div class="d-flex gap-2">
                                         <button type="button" class="btn btn-sm btn-outline-danger action-btn-doctor" onclick="thaTimCauHoi(@item.Id)">
@@ -289,7 +289,7 @@
                             }
                         </div>
 
-                        @if (User.Identity.IsAuthenticated && User.IsInRole("Doctor"))
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Doctor"))
                         {
                             <div class="collapse mt-3" id="collapseReply-@item.Id">
                                 <div class="card card-body bg-light border-0 rounded-3 p-3">

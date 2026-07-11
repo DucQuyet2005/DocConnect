@@ -227,9 +227,12 @@
             <div class="card border-0 shadow-sm p-4 rounded-4 sticky-top border border-light" style="top: 100px; z-index: 20;">
                 <h6 class="fw-bold mb-3 text-dark text-center text-uppercase tracking-wide">Tư vấn trực tuyến</h6>
                 <p class="small text-muted text-center mb-4">Kết nối video call trực tiếp 1-1 với bác sĩ ngay trên ứng dụng di động DocConnect.</p>
-                <a href="/TinNhan/CuocTroChuyen/@Model.Id" class="btn btn-main w-100 py-2.5 rounded-pill fw-bold shadow-sm text-decoration-none text-center d-block">
-                    <i class="fa-solid fa-comment-medical me-2"></i> Nhắn tin tư vấn ngay
-                </a>
+                <form asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="m-0">
+                    <input type="hidden" name="bacSiId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-main w-100 py-2.5 rounded-pill fw-bold shadow-sm text-decoration-none text-center d-block">
+                        <i class="fa-solid fa-comment-medical me-2"></i> Nhắn tin tư vấn ngay
+                    </button>
+                </form>
             </div>
         </div>
     </div>
