@@ -82,8 +82,42 @@
             font-size: 18px;
             line-height: 1;
         }
+        #notificationBody {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+        }
+        .text-truncate {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #chatNotificationList {
+            transition: all 0.3s ease;
+            transform-origin: bottom right;
+        }
+
     </style>
 </head>
+
+<div id="chat-notification-tray" style="position:fixed; bottom:20px; right:20px; z-index:9999;">
+    <button id="btnToggleChat" class="btn btn-primary rounded-circle shadow-lg" style="width:60px; height:60px; position:relative;">
+        <i class="fa-solid fa-comment-dots"></i>
+        <span id="badgeCount" class="badge bg-danger position-absolute top-0 start-100 translate-middle" style="display:none;">0</span>
+    </button>
+    
+    <div id="chatNotificationList" class="card shadow-lg" style="display:none; width:300px; position:absolute; bottom:80px; right:0; border-radius:10px; background: white;">
+        <div class="card-header bg-primary text-white">Tin nhắn chờ</div>
+        <div class="card-body p-0" id="notificationBody" style="max-height:300px; overflow-y:auto;">
+            </div>
+    </div>
+</div>
+
+<div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+</div>
+
 <body>
     @if (User.Identity?.IsAuthenticated == true)
     {
@@ -130,6 +164,12 @@
                     <li class="nav-item">
                     <a class="nav-link" href="/HoiDap/HoiDap">Hỏi đáp bác sĩ</a>
                     </li>
+                    @if (User.IsInRole("Doctor")) 
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-primary fw-bold" href="/TinNhan/DanhSachPhien">Tư vấn khách hàng</a>
+                        </li>
+                    }
                     <li class="nav-item"><a class="nav-link btn btn-outline-primary text-main ms-2" href="#">Hồ sơ sức khỏe</a></li>
                 </ul>
             </div>
@@ -179,81 +219,87 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    @if (User.Identity?.IsAuthenticated == true)
+
+   @if (User.Identity?.IsAuthenticated == true)
     {
+        <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
         <script>
-            (function () {
-                const notificationArea = document.getElementById("notification-area");
-                const notificationConnection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+            document.addEventListener("DOMContentLoaded", function () {
+                // Khởi tạo kết nối SignalR
+                const notificationConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/chatHub")
+                    .withAutomaticReconnect()
+                    .build();
 
-                function escapeHtml(text) {
-                    return String(text)
-                        .replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;")
-                        .replace(/"/g, "&quot;")
-                        .replace(/'/g, "&#39;");
+                const btnToggle = document.getElementById('btnToggleChat');
+                const notificationList = document.getElementById('chatNotificationList');
+                const badge = document.getElementById('badgeCount');
+                const notificationBody = document.getElementById('notificationBody');
+
+                // --- HÀM RENDER LẠI DANH SÁCH TỪ LOCALSTORAGE ---
+                function renderNotificationList() {
+                    let tinNhanCho = JSON.parse(localStorage.getItem('tinNhanCho') || '[]');
+                    if (notificationBody) {
+                        notificationBody.innerHTML = ''; 
+                        tinNhanCho.forEach(item => {
+                            notificationBody.insertAdjacentHTML('beforeend', `
+                                <a href="/TinNhan/CuocTroChuyen/${item.phienId}" class="list-group-item list-group-item-action p-2 border-bottom">
+                                    <div class="small fw-bold">Tin nhắn mới</div>
+                                    <div class="text-truncate" style="font-size:0.85rem;">${item.message}</div>
+                                </a>`);
+                        });
+                    }
+                    if (badge) {
+                        badge.style.display = tinNhanCho.length > 0 ? 'inline-block' : 'none';
+                        badge.innerText = tinNhanCho.length;
+                    }
                 }
 
-                function isInCurrentChat(phienId) {
-                    const currentChatPhienId = window.__docconnectCurrentChatPhienId;
-                    if (!currentChatPhienId) {
-                        return false;
-                    }
+                // Gọi render ngay khi load trang
+                renderNotificationList();
 
-                    return String(currentChatPhienId) === String(phienId);
-                }
-
-                function addNotification(phienId, message) {
-                    if (!notificationArea) {
-                        return;
-                    }
-
-                    if (isInCurrentChat(phienId)) {
-                        return;
-                    }
-
-                    const card = document.createElement("div");
-                    card.className = "notification-card";
-                    card.dataset.phienId = phienId;
-                    card.innerHTML = `
-                        <div class="notification-card-header">
-                            <div class="notification-card-title">
-                                <i class="fa-solid fa-bell"></i>
-                                <span>Thông báo mới</span>
-                            </div>
-                            <button type="button" class="notification-close" aria-label="Đóng">&times;</button>
-                        </div>
-                        <div class="notification-card-body">
-                            <div class="mb-2">${escapeHtml(message)}</div>
-                            <a href="/TinNhan/CuocTroChuyen/${phienId}" class="btn btn-primary btn-sm fw-semibold">Vào trả lời ngay</a>
-                        </div>
-                    `;
-
-                    card.querySelector(".notification-close")?.addEventListener("click", function () {
-                        card.remove();
+                // Xử lý đóng/mở bảng tin nhắn chờ
+                if (btnToggle) {
+                    btnToggle.addEventListener('click', function () {
+                        notificationList.style.display = (notificationList.style.display === 'none' || notificationList.style.display === '') ? 'block' : 'none';
                     });
-
-                    notificationArea.prepend(card);
                 }
 
-                notificationConnection.on("NotifyNewMessage", function (phienId, message) {
-                    addNotification(phienId, message);
-                });
-
+                // 2. Logic lắng nghe sự kiện
                 notificationConnection.on("ReceiveNotification", function (phienId, message) {
-                    addNotification(phienId, message);
+                    // A. Lưu vào LocalStorage
+                    let tinNhanCho = JSON.parse(localStorage.getItem('tinNhanCho') || '[]');
+                    tinNhanCho.unshift({ phienId: phienId, message: message });
+                    localStorage.setItem('tinNhanCho', JSON.stringify(tinNhanCho));
+                    renderNotificationList();
+
+                    // B. Cập nhật giao diện nếu đang ở trang DanhSachPhien
+                    const phienElement = document.querySelector(`[data-phien-id="${phienId}"]`);
+                    if (phienElement) {
+                        phienElement.classList.add('border-primary');
+                        const badgeMoi = phienElement.querySelector('.badge-moi');
+                        if (badgeMoi) badgeMoi.style.display = 'inline';
+                        const text = phienElement.querySelector('.tin-nhan-cuoi');
+                        if (text) text.innerText = message;
+                    }
+
+                    // C. Hiện Toast thông báo (không dùng localStorage cho Toast vì nó tự xóa)
+                    const toastHtml = `<div class="toast show align-items-center text-white bg-primary border-0 mb-2"><div class="d-flex"><div class="toast-body"><strong>Tin nhắn mới:</strong> ${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
+                    const container = document.getElementById('toastContainer');
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', toastHtml);
+                        setTimeout(() => { const toast = container.querySelector('.toast'); if (toast) toast.remove(); }, 5000);
+                    }
                 });
 
-                notificationConnection.start().catch(function () {
-                    console.warn("Không thể kết nối SignalR thông báo.");
-                });
-            })();
+                notificationConnection.start().catch(err => console.error(err));
+            });
         </script>
     }
-    @* === THÊM DÒNG NÀY VÀO ĐỂ HIỂN THỊ JS CỦA TRANG CHAT === *@
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

@@ -10,6 +10,7 @@ public class ChatHub : Hub
     private readonly DocConnectDbContext _context;
     public ChatHub(DocConnectDbContext context) => _context = context;
 
+    // Gửi tin nhắn từ client đến server
     public async Task SendMessage(int phienId, string senderId, string message)
     {
         var phien = await _context.PhienTuVans.FindAsync(phienId);
@@ -27,7 +28,8 @@ public class ChatHub : Hub
             NguoiGuiId = senderId,
             NoiDung = message,
             LoaiTinNhan = "Text",
-            ThoiGianGui = DateTime.Now
+            ThoiGianGui = DateTime.Now,
+            DaDoc = false
         };
         _context.TinNhans.Add(tinNhan);
         await _context.SaveChangesAsync();
@@ -35,7 +37,7 @@ public class ChatHub : Hub
         // Gửi THÊM "tenNguoiGui" vào hàm SendAsync để phía Client nhận được
         await Clients.Group(phienId.ToString()).SendAsync("ReceiveMessage", senderId, tenNguoiGui, message);
 
-        // Phần thông báo vẫn giữ nguyên, rất tốt!
+        // Gửi thông báo đến bác sĩ và bệnh nhân nếu họ không phải là người gửi
         if (!string.Equals(phien.BacSiId, senderId, StringComparison.OrdinalIgnoreCase))
         {
             await Clients.User(phien.BacSiId).SendAsync("ReceiveNotification", phienId, $"Bạn có tin nhắn mới từ {tenNguoiGui}");

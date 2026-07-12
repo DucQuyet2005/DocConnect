@@ -127,52 +127,52 @@
     </div>
 </div>
 
-@section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
-    <script>
-        const connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
-        const currentUserId = "@(ViewBag.CurrentUserId as string ?? string.Empty)";
-        const currentPhienId = @Model.Id;
-        window.__docconnectCurrentChatPhienId = currentPhienId;
+    @section Scripts {
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+        <script>
+            const connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+            const currentUserId = "@(ViewBag.CurrentUserId as string ?? string.Empty)";
+            const currentPhienId = @Model.Id;
+            window.__docconnectCurrentChatPhienId = currentPhienId;
 
-        function taoHtmlTinNhan(noiDung, isMe, thoiGian) {
-            return `
-                <div class="msg-wrapper ${isMe ? "me" : "other"}">
-                    <div class="msg-bubble">
-                        ${noiDung}
+            function taoHtmlTinNhan(noiDung, isMe, thoiGian) {
+                return `
+                    <div class="msg-wrapper ${isMe ? "me" : "other"}">
+                        <div class="msg-bubble">
+                            ${noiDung}
+                        </div>
+                        <div class="msg-meta">
+                            ${thoiGian ?? ""}
+                        </div>
                     </div>
-                    <div class="msg-meta">
-                        ${thoiGian ?? ""}
-                    </div>
-                </div>
-            `;
-        }
-
-        function cuonKhungChatXuongDay() {
-            var chatBody = document.getElementById("chatBody");
-            if (chatBody) {
-                chatBody.scrollTop = chatBody.scrollHeight;
+                `;
             }
-        }
 
-connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
-    const isMe = (senderId === currentUserId);
-    
-    let html = `
-        <div class="msg-wrapper ${isMe ? 'me' : 'other'}">
-            <div class="msg-bubble">
-                ${message}
+            function cuonKhungChatXuongDay() {
+                var chatBody = document.getElementById("chatBody");
+                if (chatBody) {
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }
+            }
+
+    connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
+        const isMe = (senderId === currentUserId);
+        
+        let html = `
+            <div class="msg-wrapper ${isMe ? 'me' : 'other'}">
+                <div class="msg-bubble">
+                    ${message}
+                </div>
+                <div class="msg-meta">
+                    ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
             </div>
-            <div class="msg-meta">
-                ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-        </div>
-    `; 
-    
-    $('#chatBody').append(html);
-    cuonKhungChatXuongDay();
-});
+        `; 
+        
+        $('#chatBody').append(html);
+        cuonKhungChatXuongDay();
+    });
 
         connection.start().then(() => {
             connection.invoke("JoinRoom", currentPhienId);
@@ -210,6 +210,28 @@ connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
                 }
             });
 
+        });
+    </script>
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Lấy ID phiên hiện tại từ Model
+            const currentPhienId = @Model.Id; 
+            
+            // Lấy danh sách tin nhắn chờ từ localStorage
+            let tinNhanCho = JSON.parse(localStorage.getItem('tinNhanCho') || '[]');
+            
+            // Lọc bỏ tin nhắn thuộc phiên hiện tại (đánh dấu là đã xem)
+            let updatedList = tinNhanCho.filter(item => item.phienId != currentPhienId);
+            
+            // Cập nhật lại localStorage
+            localStorage.setItem('tinNhanCho', JSON.stringify(updatedList));
+            
+            // Cập nhật lại giao diện badge (số lượng trên icon chat) nếu đang ở trang này
+            const badge = document.getElementById('badgeCount');
+            if (badge) {
+                badge.style.display = updatedList.length > 0 ? 'inline-block' : 'none';
+                badge.innerText = updatedList.length;
+            }
         });
     </script>
 }

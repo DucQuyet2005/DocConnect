@@ -9,12 +9,15 @@ namespace DocConnect.Web.Models.Entities
     {
         [Key]
         public int Id { get; set; }
-       public int PhienTuVanId { get; set; } // Khóa ngoại
+        public int PhienTuVanId { get; set; } // Khóa ngoại
         [ForeignKey("PhienTuVanId")]
-        public PhienTuVan PhienTuVan { get; set; } // Thuộc tính điều hướng (Navigation)
+        public PhienTuVan? PhienTuVan { get; set; }// Thuộc tính điều hướng (Navigation)
         public string NguoiGuiId { get; set; } = string.Empty;
         public string? NoiDung { get; set; }
         public string? LoaiTinNhan { get; set; }
         public DateTime ThoiGianGui { get; set; }
+
+        [NotMapped] // Không lưu vào database, chỉ dùng để hiển thị trên view
+        public bool DaDoc { get; set; } = false;      // Hoặc tên khác như 'IsRead'
     }
 }

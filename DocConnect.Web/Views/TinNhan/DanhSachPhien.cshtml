@@ -1,17 +1,30 @@
 @model IEnumerable<DocConnect.Web.Models.Entities.PhienTuVan>
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
 
-<h2>Danh sách bệnh nhân đang chờ tư vấn</h2>
-
-<div class="list-group">
-    @foreach (var phien in Model)
-    {
-        <div class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <h5>Bệnh nhân: @(phien.BenhNhan?.HoTen ?? "Không xác định")</h5> <small>Thời gian bắt đầu: @((phien.ThoiGianBatDauThucTe != null) ? phien.ThoiGianBatDauThucTe.Value.ToString("HH:mm dd/MM/yyyy") : "Chưa có thời gian")</small>
-            </div>
-            <a asp-action="CuocTroChuyen" asp-route-id="@phien.Id" class="btn btn-primary">
-                Vào phòng chat
+<div class="container mt-4" style="max-width: 800px;">
+    <h3 class="mb-4"><i class="fa-solid fa-inbox text-primary me-2"></i> Quản lý tư vấn</h3>
+    
+        <div class="list-group shadow-sm">
+        @foreach (var phien in Model)
+        {
+            <a href="/TinNhan/CuocTroChuyen/@phien.Id" class="list-group-item list-group-item-action p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1 fw-bold">
+                        @phien.BenhNhan?.HoTen
+                        @if (phien.IsUnread) {
+                            <span class="badge bg-primary ms-2">Mới</span>
+                        }
+                    </h5>
+                    <small class="text-muted">@phien.ThoiGianCuoiCung?.ToString("HH:mm")</small>
+                </div>
+                <p class="mb-0 text-secondary text-truncate">
+                    @if (phien.NguoiGuiCuoiId == User.FindFirstValue(ClaimTypes.NameIdentifier)) {
+                        <span class="text-dark">Bạn: </span>
+                    }
+                    @(phien.TinNhanCuoi ?? "Chưa có tin nhắn nào...")
+                </p>
             </a>
-        </div>
-    }
+        }
+    </div>
 </div>
