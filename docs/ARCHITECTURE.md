@@ -61,18 +61,16 @@ DocConnect/
     ├── Services/                       # Tầng Nghiệp vụ (Business Logic Layer)
     │   ├── Interfaces/                 # Định nghĩa Interface (IAppointmentService, IChatService...)
     │   ├── AppointmentService.cs       # Gọi UnitOfWork/Repository để xử lý lịch hẹn
-    │   ├── PaymentService.cs           # Tích hợp cổng thanh toán trực tuyến
     │   └── EncryptionService.cs        # Mã hóa thông tin bệnh án nhạy cảm (AES-256)
     │
     ├── Controllers/                    # Tầng Điều hướng (MVC Controllers)
     │   ├── HomeController.cs
     │   ├── AccountController.cs
     │   ├── AppointmentController.cs    # Chỉ nhận DI từ tầng Services (hoặc UnitOfWork)
-    │   └── ConsultationController.cs
+    │   └── ConsultationController.cs   # Điều hướng phòng khám và xử lý API Chat AJAX
     │
     ├── Models/                         # ViewModels & DTOs
     ├── Views/                          # Razor MVC Views
-    ├── Hubs/                           # Real-time Web Sockets (SignalR Chat Hubs)
     └── wwwroot/                        # Tệp tĩnh (CSS, JS, Images, Libs)
 ```
 
@@ -112,7 +110,6 @@ builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 // 4. Đăng ký tầng Business Logic Services
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 ```
 
@@ -145,9 +142,9 @@ public interface IUnitOfWork : IDisposable
 
 ---
 
-## 5. Giải Pháp Tư Vấn Thời Gian Thực (SignalR & WebRTC)
-* **SignalR Chat Hub:** Nhận kết nối trực tiếp, kiểm tra JWT xác thực của bệnh nhân/bác sĩ, lưu tin nhắn vào CSDL thông qua `IUnitOfWork` và phát lại (broadcast) tin nhắn tức thời.
-* **WebRTC Video Calls:** Sử dụng SignalR Server làm Signaling Server để chuyển tiếp thông tin địa chỉ mạng và tham số cấu hình (ICE Candidates, SDP) giữa hai thiết bị trước khi thiết lập đường truyền Video Call trực tiếp Peer-to-Peer.
+## 5. Giải Pháp Tư Vấn Trực Tuyến (AJAX Short Polling)
+* **API Nhắn tin:** Client gửi tin nhắn mới thông qua yêu cầu AJAX POST đến `ConsultationController`. Controller nhận tin nhắn, kiểm tra tính hợp lệ và lưu vào CSDL thông qua `IUnitOfWork`.
+* **Cơ chế cập nhật tin nhắn (Short Polling):** Trang web phía Client sử dụng JavaScript (`setInterval`) để gửi yêu cầu AJAX GET định kỳ mỗi 2 giây đến Controller nhằm lấy danh sách tin nhắn mới phát sinh từ đối phương và hiển thị lên màn hình chat mà không cần tải lại trang.
 
 ---
 

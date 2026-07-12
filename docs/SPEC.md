@@ -1,112 +1,112 @@
 # ĐẶC TẢ YÊU CẦU PHẦN MỀM (SOFTWARE SPECIFICATION - SPEC)
-> **Dự án:** DocConnect - Hệ thống tư vấn sức khỏe trực tuyến
-> **Kiến trúc:** Monolithic (Đơn khối)
-> **Mô hình giao diện:** ASP.NET Core MVC (Razor Views)
+> **Dự án:** DocConnect - Hệ thống tư vấn sức khỏe trực tuyến (Phiên bản tối giản)
+> **Kiến trúc:** Monolithic (Đơn khối) áp dụng Repository Pattern & Unit of Work
+> **Mô hình giao diện:** ASP.NET Core MVC (Razor Views) kết hợp jQuery AJAX
 
-Tài liệu này đặc tả chi tiết các yêu cầu chức năng, luồng nghiệp vụ và mô hình dữ liệu cho dự án **DocConnect**.
+Tài liệu này đặc tả chi tiết các yêu cầu chức năng cốt lõi, luồng nghiệp vụ và thiết kế cơ sở dữ liệu đã được tối giản hóa cho dự án **DocConnect** phù hợp với quy mô nhóm 3 người.
 
 ---
 
 ## 1. Các Vai Trò Người Dùng (Actors & Roles)
 
-Hệ thống phục vụ 3 nhóm đối tượng chính với quyền hạn và giao diện khác nhau:
+Hệ thống tập trung hoàn toàn vào hai vai trò chính tương tác trực tiếp với nhau, loại bỏ hoàn toàn vai trò Admin quản trị để tối ưu hóa thời gian phát triển:
 
 ### 1.1. Bệnh nhân (Patient)
-* Đăng ký tài khoản, đăng nhập qua Email/Số điện thoại.
-* Cập nhật hồ sơ cá nhân: Họ tên, ngày sinh, số điện thoại, địa chỉ, nhóm máu, tiền sử bệnh án cá nhân.
-* Tìm kiếm Bác sĩ theo: Tên bác sĩ, chuyên khoa, mức phí tư vấn, hoặc đánh giá.
-* Đặt lịch tư vấn: Chọn ngày, chọn khung giờ trống (Time Slot) của bác sĩ.
-* Thanh toán phí tư vấn qua cổng thanh toán trực tuyến.
-* Tham gia ca tư vấn: Chat trực tuyến, gọi cuộc gọi video với bác sĩ.
-* Xem lịch sử tư vấn, đơn thuốc điện tử được kê bởi bác sĩ.
+* **Đăng ký/Đăng nhập:** Đăng ký tài khoản (tab Bệnh nhân) bằng Email, Họ tên, Mật khẩu, Số điện thoại.
+* **Cập nhật hồ sơ:** Cập nhật thông tin chi tiết: Ngày sinh, Giới tính, Địa chỉ, Tiền sử bệnh án cá nhân.
+* **Tìm kiếm bác sĩ:** Xem danh sách bác sĩ, tìm kiếm theo tên hoặc lọc theo chuyên khoa.
+* **Đặt lịch tư vấn:** Chọn bác sĩ, chọn ngày khám và chọn khung giờ trống (Time Slot). Nhập mô tả triệu chứng ban đầu.
+* **Phòng tư vấn trực tuyến:** Chat trực tuyến với bác sĩ (gửi và nhận tin nhắn thời gian thực qua cơ chế AJAX polling).
+* **Lịch sử khám bệnh:** Xem lại các lịch hẹn đã khám, xem chẩn đoán và đơn thuốc điện tử được kê bởi bác sĩ.
 
 ### 1.2. Bác sĩ (Doctor)
-* Đăng ký hồ sơ bác sĩ: Điền chuyên khoa, tiểu sử, số năm kinh nghiệm, mức phí tư vấn, hình ảnh bằng cấp/chứng chỉ hành nghề (chờ Admin duyệt).
-* Cập nhật lịch làm việc: Thiết lập các ca trực/khung giờ rảnh theo lịch tuần.
-* Quản lý lịch hẹn khám: Chấp nhận, từ chối hoặc hủy lịch hẹn từ bệnh nhân.
-* Tiến hành tư vấn trực tuyến: Nhắn tin chat, gọi điện video call cho bệnh nhân khi đến giờ hẹn.
-* Ghi chẩn đoán y khoa và kê đơn thuốc điện tử trực tiếp sau ca khám.
-* Xem lịch sử hồ sơ bệnh án của bệnh nhân (chỉ những bệnh nhân đã đặt lịch với bác sĩ đó).
-
-### 1.3. Quản trị viên (Admin)
-* Đăng nhập trang quản trị dành riêng cho Admin.
-* Quản lý người dùng: Khóa/mở khóa tài khoản của bệnh nhân và bác sĩ.
-* Phê duyệt hồ sơ bác sĩ: Kiểm tra bằng cấp và chuyển trạng thái tài khoản bác sĩ thành `Verified` (được hiển thị trên trang tìm kiếm).
-* Quản lý chuyên khoa: Thêm/Sửa/Xóa các chuyên khoa y tế (Nội khoa, Nhi khoa, Da liễu, Răng Hàm Mặt, v.v.).
-* Xem báo cáo & Thống kê: Doanh thu hệ thống, tổng số ca tư vấn, biểu đồ phát triển người dùng.
+* **Đăng ký tài khoản (Tự kích hoạt):** Đăng ký tài khoản (tab Bác sĩ). Chọn chuyên khoa có sẵn hoặc nhập chuyên khoa mới. Nhập số năm kinh nghiệm, tiểu sử ngắn và mức phí tư vấn tham khảo. Tài khoản sau khi đăng ký sẽ tự động hiển thị trên hệ thống (không cần phê duyệt).
+* **Quản lý lịch hẹn:** Xem danh sách các yêu cầu đặt lịch hẹn của bệnh nhân. Có quyền "Xác nhận" (Confirm) hoặc "Hủy" (Cancel) lịch hẹn.
+* **Tiến hành tư vấn trực tuyến:** Khi đến giờ hẹn, truy cập vào phòng tư vấn để nhắn tin trao đổi trực tiếp với bệnh nhân (qua giao diện chat AJAX).
+* **Kê đơn & Chẩn đoán:** Kết thúc buổi tư vấn, nhập chẩn đoán lâm sàng và kê đơn thuốc (lưu thông tin bệnh án). Chuyển trạng thái lịch hẹn thành hoàn thành (`Completed`).
+* **Xem hồ sơ bệnh nhân:** Xem hồ sơ y tế và lịch sử khám của bệnh nhân đã đặt lịch với mình.
 
 ---
 
 ## 2. Luồng Nghiệp Vụ Chi Tiết (Key Workflows)
 
-### 2.1. Luồng Đặt Lịch & Tư Vấn (Booking to Consultation)
-1. **Bước 1: Tìm kiếm bác sĩ:** Bệnh nhân xem danh sách bác sĩ chuyên khoa đã được Admin duyệt.
-2. **Bước 2: Chọn ca khám:** Bệnh nhân chọn một bác sĩ, xem các khung giờ trống và chọn một ca.
-3. **Bước 3: Xác nhận & Thanh toán:** Bệnh nhân điền triệu chứng sơ bộ, chọn phương thức thanh toán và tiến hành thanh toán trực tuyến. Trạng thái lịch hẹn lúc này là `Pending` (Chờ xác nhận).
-4. **Bước 4: Bác sĩ nhận lịch:** Lịch hẹn chuyển sang `Confirmed` sau khi thanh toán thành công và bác sĩ chấp nhận ca khám.
-5. **Bước 5: Tư vấn Real-time:** Khi tới khung giờ hẹn, phòng tư vấn được mở. Bác sĩ và bệnh nhân tiến hành chat/gọi video trực tiếp.
-6. **Bước 6: Hoàn thành & Kê đơn:** Kết thúc thời gian tư vấn, bác sĩ nhập chẩn đoán và đơn thuốc. Lịch hẹn chuyển sang trạng thái `Completed`.
+### 2.1. Đăng ký tài khoản chia 2 Tab
+1. Người dùng truy cập trang Đăng ký (`/Account/Register`).
+2. Giao diện hiển thị 2 tab: **Đăng ký Bệnh nhân** và **Đăng ký Bác sĩ**.
+3. **Nếu chọn tab Bác sĩ:**
+   * Hệ thống hiển thị danh sách Chuyên khoa dưới dạng Dropdown (lấy từ bảng `Specialties` đã có sẵn dữ liệu mẫu).
+   * Cung cấp một tùy chọn hoặc ô nhập text: "Chuyên khoa khác (nếu không có trong danh sách)".
+   * Nếu bác sĩ nhập chuyên khoa mới, khi lưu tài khoản, hệ thống sẽ tự động thêm chuyên khoa đó vào bảng `Specialties` trước khi liên kết với bác sĩ.
+
+### 2.2. Luồng Đặt Lịch & Tư Vấn (Không cần thanh toán)
+1. **Bước 1: Tìm kiếm bác sĩ:** Bệnh nhân xem danh sách bác sĩ trên trang chủ hoặc trang tìm kiếm, có thể lọc nhanh theo Chuyên khoa.
+2. **Bước 2: Chọn khung giờ:** Bệnh nhân chọn bác sĩ, chọn ngày khám và một khung giờ rảnh (Ví dụ: `08:00 - 08:30`). Nhập tóm tắt triệu chứng.
+3. **Bước 3: Gửi yêu cầu:** Bệnh nhân xác nhận đặt lịch. Lịch hẹn được tạo với trạng thái ban đầu là `Pending`.
+4. **Bước 4: Bác sĩ duyệt lịch:** Bác sĩ vào danh sách lịch hẹn của mình, nhấn **Xác nhận** (trạng thái chuyển sang `Confirmed`) hoặc **Từ chối/Hủy** (trạng thái chuyển sang `Cancelled`).
+5. **Bước 5: Tư vấn Chat AJAX:** Đến giờ hẹn, cả hai bên vào phòng tư vấn (`/Consultation/Room/{appointmentId}`). Hai bên gửi tin nhắn qua lại. Giao diện chat sử dụng JavaScript để tự động gửi request AJAX lấy tin nhắn mới sau mỗi 2 giây (Short Polling) để cập nhật giao diện.
+6. **Bước 6: Hoàn thành khám:** Bác sĩ nhấn nút "Kết thúc cuộc hẹn", hệ thống hiển thị form nhập Chẩn đoán và Đơn thuốc. Sau khi lưu, thông tin được lưu vào bảng `MedicalRecords` và trạng thái lịch hẹn chuyển sang `Completed`.
 
 ---
 
 ## 3. Thiết Kế Cơ Sở Dữ Liệu (Database Schema Design)
 
-Cơ sở dữ liệu sử dụng **SQL Server** và được quản lý thông qua **Entity Framework Core (Code-First)**. Do hệ thống sử dụng kiến trúc Monolith, tất cả các thực thể đều được khai báo trực tiếp trong thư mục `Data/Entities` của dự án `DocConnect.Web`.
+Sử dụng **SQL Server** thông qua **Entity Framework Core (Code-First)**. Tất cả các thực thể nằm trong thư mục `Data/Entities` của dự án `DocConnect.Web`.
 
 ### 3.1. Sơ đồ Quan hệ Thực thể (Entity Relationship Overview)
-* `User` 1 ➔ 0..1 `Patient`
-* `User` 1 ➔ 0..1 `Doctor`
-* `Patient` 1 ➔ 0..* `Appointment`
-* `Doctor` 1 ➔ 0..* `Appointment`
-* `Appointment` 1 ➔ 0..1 `MedicalRecord`
-* `Appointment` 1 ➔ 0..* `Message`
+* `ApplicationUser` (Kế thừa `IdentityUser`) ➔ `Patient` (1 - 0..1)
+* `ApplicationUser` (Kế thừa `IdentityUser`) ➔ `Doctor` (1 - 0..1)
+* `Specialty` ➔ `Doctor` (1 - N)
+* `Patient` ➔ `Appointment` (1 - N)
+* `Doctor` ➔ `Appointment` (1 - N)
+* `Appointment` ➔ `MedicalRecord` (1 - 0..1)
+* `Appointment` ➔ `Message` (1 - N)
 
 ### 3.2. Đặc tả các Bảng dữ liệu
 
-#### Bảng `Users` (Người dùng hệ thống)
-```sql
-CREATE TABLE Users (
-    Id UNIQUEIDENTIFIER PRIMARY KEY,
-    Email NVARCHAR(100) NOT NULL UNIQUE,
-    PasswordHash NVARCHAR(MAX) NOT NULL,
-    FullName NVARCHAR(100) NOT NULL,
-    PhoneNumber VARCHAR(15) NOT NULL,
-    Avatar NVARCHAR(500) NULL,
-    Role NVARCHAR(20) NOT NULL, -- 'Admin', 'Doctor', 'Patient'
-    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
-);
+#### Bảng `AspNetUsers` (Được mở rộng thông qua lớp `ApplicationUser`)
+```csharp
+public class ApplicationUser : IdentityUser
+{
+    public string FullName { get; set; }
+    public string Role { get; set; } // "Patient" hoặc "Doctor"
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
 ```
 
-#### Bảng `Patients` (Thông tin Bệnh nhân)
+#### Bảng `Patients` (Thông tin chi tiết Bệnh nhân)
 ```sql
 CREATE TABLE Patients (
-    Id UNIQUEIDENTIFIER PRIMARY KEY,
-    UserId UNIQUEIDENTIFIER NOT NULL UNIQUE,
+    Id UNIQUEIDENTIFIER PRIMARY KEY, -- Khóa ngoại liên kết tới AspNetUsers(Id)
     DateOfBirth DATE NOT NULL,
-    Gender NVARCHAR(10) NOT NULL, -- 'Nam', 'Nữ', 'Khác'
+    Gender NVARCHAR(10) NOT NULL,    -- 'Nam', 'Nữ', 'Khác'
     Address NVARCHAR(250) NULL,
-    BloodType VARCHAR(5) NULL,    -- 'A', 'B', 'O', 'AB'
-    MedicalHistory NVARCHAR(MAX) NULL,
-    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
+    MedicalHistory NVARCHAR(MAX) NULL, -- Tiền sử bệnh án cá nhân
+    FOREIGN KEY (Id) REFERENCES AspNetUsers(Id) ON DELETE CASCADE
 );
 ```
 
-#### Bảng `Doctors` (Thông tin Bác sĩ)
+#### Bảng `Specialties` (Chuyên khoa)
+```sql
+CREATE TABLE Specialties (
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL UNIQUE -- Tên chuyên khoa (ví dụ: Nội khoa, Nhi khoa...)
+);
+```
+
+#### Bảng `Doctors` (Thông tin chi tiết Bác sĩ)
 ```sql
 CREATE TABLE Doctors (
-    Id UNIQUEIDENTIFIER PRIMARY KEY,
-    UserId UNIQUEIDENTIFIER NOT NULL UNIQUE,
-    Specialty NVARCHAR(100) NOT NULL,
+    Id UNIQUEIDENTIFIER PRIMARY KEY, -- Khóa ngoại liên kết tới AspNetUsers(Id)
+    SpecialtyId UNIQUEIDENTIFIER NOT NULL,
     ExperienceYears INT NOT NULL,
     Biography NVARCHAR(MAX) NULL,
     ConsultationFee DECIMAL(18,2) NOT NULL,
-    IsVerified BIT NOT NULL DEFAULT 0,
-    CertificationUrl NVARCHAR(500) NULL, -- Minh chứng bằng cấp
-    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
+    FOREIGN KEY (Id) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+    FOREIGN KEY (SpecialtyId) REFERENCES Specialties(Id)
 );
 ```
 
-#### Bảng `Appointments` (Lịch hẹn tư vấn)
+#### Bảng `Appointments` (Lịch hẹn khám)
 ```sql
 CREATE TABLE Appointments (
     Id UNIQUEIDENTIFIER PRIMARY KEY,
@@ -115,9 +115,7 @@ CREATE TABLE Appointments (
     Date DATE NOT NULL,
     TimeSlot VARCHAR(20) NOT NULL,       -- Ví dụ: '08:00 - 08:30'
     Status NVARCHAR(20) NOT NULL DEFAULT 'Pending', -- 'Pending', 'Confirmed', 'Cancelled', 'Completed'
-    ConsultationFee DECIMAL(18,2) NOT NULL,
-    PaymentStatus NVARCHAR(20) NOT NULL DEFAULT 'Unpaid', -- 'Unpaid', 'Paid', 'Refunded'
-    SymptomsSummary NVARCHAR(500) NULL,  -- Triệu chứng bệnh nhân nhập khi đặt lịch
+    SymptomsSummary NVARCHAR(500) NULL,  -- Triệu chứng do bệnh nhân nhập khi đặt lịch
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (PatientId) REFERENCES Patients(Id),
     FOREIGN KEY (DoctorId) REFERENCES Doctors(Id)
@@ -131,22 +129,22 @@ CREATE TABLE MedicalRecords (
     AppointmentId UNIQUEIDENTIFIER NOT NULL UNIQUE,
     Symptoms NVARCHAR(MAX) NOT NULL,       -- Triệu chứng ghi nhận bởi bác sĩ
     Diagnosis NVARCHAR(MAX) NOT NULL,      -- Chẩn đoán y khoa
-    Prescription NVARCHAR(MAX) NOT NULL,   -- Danh sách thuốc và liều dùng (JSON format)
-    Note NVARCHAR(MAX) NULL,               -- Dặn dò thêm
+    Prescription NVARCHAR(MAX) NOT NULL,   -- Danh sách thuốc và liều dùng (Text/JSON)
+    Note NVARCHAR(MAX) NULL,               -- Lời dặn của bác sĩ
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (AppointmentId) REFERENCES Appointments(Id) ON DELETE CASCADE
 );
 ```
 
-#### Bảng `Messages` (Tin nhắn tư vấn trực tiếp)
+#### Bảng `Messages` (Lịch sử nhắn tin trong ca tư vấn)
 ```sql
 CREATE TABLE Messages (
     Id UNIQUEIDENTIFIER PRIMARY KEY,
     AppointmentId UNIQUEIDENTIFIER NOT NULL,
-    SenderId UNIQUEIDENTIFIER NOT NULL,
+    SenderId NVARCHAR(450) NOT NULL,       -- Khóa ngoại liên kết tới AspNetUsers(Id)
     Content NVARCHAR(MAX) NOT NULL,
     SentAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (AppointmentId) REFERENCES Appointments(Id) ON DELETE CASCADE,
-    FOREIGN KEY (SenderId) REFERENCES Users(Id)
+    FOREIGN KEY (SenderId) REFERENCES AspNetUsers(Id)
 );
 ```
