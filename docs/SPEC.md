@@ -69,6 +69,7 @@ public class ApplicationUser : IdentityUser
 {
     public string FullName { get; set; }
     public string Role { get; set; } // "Patient" hoặc "Doctor"
+    public string? Avatar { get; set; } // Đường dẫn ảnh đại diện
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 ```
@@ -101,6 +102,7 @@ CREATE TABLE Doctors (
     ExperienceYears INT NOT NULL,
     Biography NVARCHAR(MAX) NULL,
     ConsultationFee DECIMAL(18,2) NOT NULL,
+    CertificationUrl NVARCHAR(500) NULL, -- Đường dẫn tải lên chứng chỉ hành nghề
     FOREIGN KEY (Id) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
     FOREIGN KEY (SpecialtyId) REFERENCES Specialties(Id)
 );
@@ -129,6 +131,7 @@ CREATE TABLE MedicalRecords (
     AppointmentId UNIQUEIDENTIFIER NOT NULL UNIQUE,
     Symptoms NVARCHAR(MAX) NOT NULL,       -- Triệu chứng ghi nhận bởi bác sĩ
     Diagnosis NVARCHAR(MAX) NOT NULL,      -- Chẩn đoán y khoa
+    Treatment NVARCHAR(MAX) NOT NULL,      -- Hướng điều trị
     Prescription NVARCHAR(MAX) NOT NULL,   -- Danh sách thuốc và liều dùng (Text/JSON)
     Note NVARCHAR(MAX) NULL,               -- Lời dặn của bác sĩ
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
@@ -142,7 +145,9 @@ CREATE TABLE Messages (
     Id UNIQUEIDENTIFIER PRIMARY KEY,
     AppointmentId UNIQUEIDENTIFIER NOT NULL,
     SenderId NVARCHAR(450) NOT NULL,       -- Khóa ngoại liên kết tới AspNetUsers(Id)
-    Content NVARCHAR(MAX) NOT NULL,
+    Content NVARCHAR(MAX) NULL,            -- Nội dung văn bản
+    MessageType NVARCHAR(10) NOT NULL DEFAULT 'Text', -- 'Text' hoặc 'Image'
+    ImageUrl NVARCHAR(500) NULL,           -- Đường dẫn hình ảnh (nếu gửi ảnh)
     SentAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (AppointmentId) REFERENCES Appointments(Id) ON DELETE CASCADE,
     FOREIGN KEY (SenderId) REFERENCES AspNetUsers(Id)
