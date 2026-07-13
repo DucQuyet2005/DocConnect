@@ -10,6 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DocConnectDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<DocConnect.Web.Repositories.IAccountRepository, DocConnect.Web.Repositories.AccountRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.IBacSiRepository, DocConnect.Web.Repositories.BacSiRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.IHoiDapRepository, DocConnect.Web.Repositories.HoiDapRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.ITinNhanRepository, DocConnect.Web.Repositories.TinNhanRepository>();
+
 // 2. Cấu hình xác thực bằng Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

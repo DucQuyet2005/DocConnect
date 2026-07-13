@@ -14,11 +14,11 @@ namespace DocConnect.Web.Controllers
     public class TinNhanController : Controller
     {
         
-        private readonly DocConnectDbContext _context;
+        private readonly DocConnect.Web.Repositories.ITinNhanRepository _tinNhanRepository;
 
-        public TinNhanController(DocConnectDbContext context)
+        public TinNhanController(DocConnect.Web.Repositories.ITinNhanRepository tinNhanRepository)
         {
-            _context = context;
+            _tinNhanRepository = tinNhanRepository;
         }
 
         [HttpPost("KhoiTaoPhien")]
@@ -36,14 +36,13 @@ namespace DocConnect.Web.Controllers
                 return NotFound();
             }
 
-            var hoSoBacSi = await _context.HoSoBacSis.FirstOrDefaultAsync(h => h.NguoiDungId == bacSiId);
+            var hoSoBacSi = await _tinNhanRepository.GetHoSoBacSiByUserIdAsync(bacSiId);
             if (hoSoBacSi == null)
             {
                 return NotFound();
             }
 
-            var phien = await _context.PhienTuVans
-                .FirstOrDefaultAsync(p => p.BacSiId == bacSiId && p.BenhNhanId == benhNhanId && (p.TrangThai == "Active" || p.TrangThai == "ChoTraLoi"));
+            var phien = await _tinNhanRepository.GetPhienTuVanActiveAsync(bacSiId, benhNhanId);
 
             if (phien == null)
             {
@@ -56,8 +55,8 @@ namespace DocConnect.Web.Controllers
                     TrangThai = "Approved"
                 };
 
-                _context.LichHens.Add(lichHen);
-                await _context.SaveChangesAsync();
+                await _tinNhanRepository.AddLichHenAsync(lichHen);
+                await _tinNhanRepository.SaveChangesAsync();
 
                 phien = new PhienTuVan
                 {
@@ -68,8 +67,8 @@ namespace DocConnect.Web.Controllers
                     TrangThai = "Active"
                 };
 
-                _context.PhienTuVans.Add(phien);
-                await _context.SaveChangesAsync();
+                await _tinNhanRepository.AddPhienTuVanAsync(phien);
+                await _tinNhanRepository.SaveChangesAsync();
             }
 
             return RedirectToAction(nameof(CuocTroChuyen), new { id = phien.Id });
@@ -86,9 +85,7 @@ namespace DocConnect.Web.Controllers
             }
             
             // 1. TÌM KIẾM phiên hiện có trước (quan trọng nhất)
-            var phienTonTai = await _context.PhienTuVans
-                .FirstOrDefaultAsync(p => p.BacSiId == id && p.BenhNhanId == userId 
-                                    && (p.TrangThai == "ChoTraLoi" || p.TrangThai == "Active"));
+            var phienTonTai = await _tinNhanRepository.GetPhienTuVanActiveAsync(id, userId);
 
             // 2. Nếu đã có phiên rồi, trả về luôn, không tạo mới
             if (phienTonTai != null)
@@ -97,7 +94,7 @@ namespace DocConnect.Web.Controllers
             }
 
             // 3. Nếu chưa có, mới tiến hành tạo mới
-            var hoSoBacSi = await _context.HoSoBacSis.FirstOrDefaultAsync(h => h.NguoiDungId == id);
+            var hoSoBacSi = await _tinNhanRepository.GetHoSoBacSiByUserIdAsync(id);
             if (hoSoBacSi == null) return NotFound();
 
             var lichHen = new LichHen
@@ -108,8 +105,8 @@ namespace DocConnect.Web.Controllers
                 ThoiGianKetThuc = DateTime.Now.AddHours(1),
                 TrangThai = "Approved"
             };
-            _context.LichHens.Add(lichHen);
-            await _context.SaveChangesAsync();
+            await _tinNhanRepository.AddLichHenAsync(lichHen);
+            await _tinNhanRepository.SaveChangesAsync();
 
             var phienMoi = new PhienTuVan {
                 LichHenId = lichHen.Id,
@@ -118,8 +115,8 @@ namespace DocConnect.Web.Controllers
                 ThoiGianBatDauThucTe = DateTime.Now,
                 TrangThai = "ChoTraLoi"
             };
-            _context.PhienTuVans.Add(phienMoi);
-            await _context.SaveChangesAsync();
+            await _tinNhanRepository.AddPhienTuVanAsync(phienMoi);
+            await _tinNhanRepository.SaveChangesAsync();
 
             return RedirectToAction(nameof(CuocTroChuyen), new { id = phienMoi.Id });
         }
@@ -143,23 +140,17 @@ namespace DocConnect.Web.Controllers
 
             if (int.TryParse(id, out int phienId))
             {
-                phien = await _context.PhienTuVans
-                    .Include(p => p.BenhNhan)
-                    .Include(p => p.BacSi)
-                    .FirstOrDefaultAsync(p => p.Id == phienId);
+                phien = await _tinNhanRepository.GetPhienTuVanByIdAsync(phienId);
             }
             else
             {
-                var hoSoBacSi = await _context.HoSoBacSis.FirstOrDefaultAsync(h => h.NguoiDungId == id);
+                var hoSoBacSi = await _tinNhanRepository.GetHoSoBacSiByUserIdAsync(id);
                 if (hoSoBacSi == null)
                 {
                     return Content($"LỖI DỮ LIỆU: Không tìm thấy hồ sơ bác sĩ có NguoiDungId = '{id}'!");
                 }
 
-                phien = await _context.PhienTuVans
-                    .Include(p => p.BenhNhan)
-                    .Include(p => p.BacSi)
-                    .FirstOrDefaultAsync(p => p.BacSiId == id && p.BenhNhanId == userId && (p.TrangThai == "ChoTraLoi" || p.TrangThai == "Active"));
+                phien = await _tinNhanRepository.GetPhienTuVanActiveAsync(id, userId);
 
                 if (phien == null)
                 {
@@ -172,8 +163,8 @@ namespace DocConnect.Web.Controllers
                         TrangThai = "Approved"
                     };
 
-                    _context.LichHens.Add(lichHen);
-                    await _context.SaveChangesAsync();
+                    await _tinNhanRepository.AddLichHenAsync(lichHen);
+                    await _tinNhanRepository.SaveChangesAsync();
 
                     phien = new PhienTuVan
                     {
@@ -184,8 +175,8 @@ namespace DocConnect.Web.Controllers
                         TrangThai = "ChoTraLoi"
                     };
 
-                    _context.PhienTuVans.Add(phien);
-                    await _context.SaveChangesAsync();
+                    await _tinNhanRepository.AddPhienTuVanAsync(phien);
+                    await _tinNhanRepository.SaveChangesAsync();
                 }
 
                 return RedirectToAction(nameof(CuocTroChuyen), new { id = phien.Id });
@@ -201,10 +192,7 @@ namespace DocConnect.Web.Controllers
                 return Forbid();
             }
 
-            var lichSuTinNhan = await _context.TinNhans
-                .Where(t => t.PhienTuVanId == phien.Id)
-                .OrderBy(t => t.ThoiGianGui)
-                .ToListAsync();
+            var lichSuTinNhan = await _tinNhanRepository.GetTinNhansByPhienIdAsync(phien.Id);
 
             ViewBag.CurrentUserId = userId;
             ViewBag.LichSuTinNhan = lichSuTinNhan;
@@ -225,18 +213,12 @@ namespace DocConnect.Web.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             // 1. Lấy tất cả phiên của bác sĩ
-            var danhSachPhien = await _context.PhienTuVans
-                .Include(p => p.BenhNhan)
-                .Where(p => p.BacSiId == userId)
-                .ToListAsync();
+            var danhSachPhien = await _tinNhanRepository.GetPhienTuVansByBacSiIdAsync(userId);
 
             // 2. Gán thông tin tin nhắn cuối để có thời gian so sánh
             foreach (var phien in danhSachPhien)
             {
-                var tinNhanCuoi = await _context.TinNhans
-                    .Where(t => t.PhienTuVanId == phien.Id)
-                    .OrderByDescending(t => t.ThoiGianGui)
-                    .FirstOrDefaultAsync();
+                var tinNhanCuoi = await _tinNhanRepository.GetTinNhanCuoiAsync(phien.Id);
 
                 if (tinNhanCuoi != null)
                 {
@@ -265,14 +247,13 @@ namespace DocConnect.Web.Controllers
         public async Task<IActionResult> GetDanhSachPhienJson()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var data = await _context.PhienTuVans
-                .Include(p => p.BenhNhan)
-                .Where(p => p.BacSiId == userId)
+            var phienTuVans = await _tinNhanRepository.GetPhienTuVansByBacSiIdAsync(userId);
+            var data = phienTuVans
                 .Select(p => new {
                     phienId = p.Id,
                     tenBenhNhan = p.BenhNhan!.HoTen
                 })
-                .ToListAsync();
+                .ToList();
             return Json(data);
         }
 

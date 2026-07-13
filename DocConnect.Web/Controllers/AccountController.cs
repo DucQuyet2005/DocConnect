@@ -15,13 +15,13 @@ namespace DocConnect.Web.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly DocConnectDbContext _context;
+        private readonly DocConnect.Web.Repositories.IAccountRepository _accountRepository;
         // Sử dụng trực tiếp NguoiDung làm kiểu Generic thay vì string để tối ưu hóa việc băm mật khẩu
         private readonly PasswordHasher<NguoiDung> _passwordHasher;
 
-        public AccountController(DocConnectDbContext context)
+        public AccountController(DocConnect.Web.Repositories.IAccountRepository accountRepository)
         {
-            _context = context;
+            _accountRepository = accountRepository;
             _passwordHasher = new PasswordHasher<NguoiDung>();
         }
 
@@ -39,11 +39,11 @@ namespace DocConnect.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var emailExists = _context.NguoiDungs.Any(u => u.Email == model.Email);
+                var emailExists = await _accountRepository.EmailExistsAsync(model.Email);
                 if (emailExists)
                 {
                     ModelState.AddModelError("Email", "Email này đã được đăng ký sử dụng.");
@@ -63,8 +63,7 @@ namespace DocConnect.Web.Controllers
                 };
                 user.MatKhauHash = _passwordHasher.HashPassword(user, model.MatKhau);
 
-                _context.NguoiDungs.Add(user);
-                _context.SaveChanges();
+                await _accountRepository.AddUserAsync(user);
                 TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
                 return RedirectToAction("Login");
             }
@@ -85,7 +84,7 @@ namespace DocConnect.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = _context.NguoiDungs.FirstOrDefault(u => u.Email == model.Email);
+                var user = await _accountRepository.GetUserByEmailAsync(model.Email);
                 if (user != null)
                 {
                     //if (user.TrangThai == false || !user.TrangThai.HasValue)

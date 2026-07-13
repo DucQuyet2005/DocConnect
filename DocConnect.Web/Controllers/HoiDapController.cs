@@ -14,12 +14,12 @@ namespace DocConnect.Web.Controllers
 {
     public class HoiDapController : Controller
     {
-        private readonly DocConnectDbContext _context;
+        private readonly DocConnect.Web.Repositories.IHoiDapRepository _hoiDapRepository;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public HoiDapController(DocConnectDbContext context, IWebHostEnvironment webHostEnvironment)
+        public HoiDapController(DocConnect.Web.Repositories.IHoiDapRepository hoiDapRepository, IWebHostEnvironment webHostEnvironment)
         {
-            _context = context;
+            _hoiDapRepository = hoiDapRepository;
             _webHostEnvironment = webHostEnvironment;
         }
 
@@ -28,10 +28,7 @@ namespace DocConnect.Web.Controllers
         public async Task<IActionResult> HoiDap()
         {
             // Lấy toàn bộ danh sách (gồm cả câu hỏi gốc và các câu trả lời "RE: ...") đã được duyệt
-            var tatCaDuLieu = await _context.HoiDaps
-                                           .Where(q => q.DaDuyet == true)
-                                           .OrderByDescending(q => q.NgayTao)
-                                           .ToListAsync();
+            var tatCaDuLieu = await _hoiDapRepository.GetTatCaHoiDapDaDuyetAsync();
 
             return View(tatCaDuLieu);
         }
@@ -91,8 +88,7 @@ namespace DocConnect.Web.Controllers
                     AnDanh = true
                 };
 
-                _context.HoiDaps.Add(entityHoiDap);
-                await _context.SaveChangesAsync();
+                await _hoiDapRepository.AddHoiDapAsync(entityHoiDap);
 
                 return RedirectToAction("HoiDap");
             }
@@ -103,10 +99,7 @@ namespace DocConnect.Web.Controllers
 
         private async Task<IActionResult> PrepareViewWithError(HoiDapViewModel model)
         {
-            var danhSachCu = await _context.HoiDaps
-                                           .Where(q => q.DaDuyet == true)
-                                           .OrderByDescending(q => q.NgayTao)
-                                           .ToListAsync();
+            var danhSachCu = await _hoiDapRepository.GetTatCaHoiDapDaDuyetAsync();
             // Trả lại dữ liệu danh sách để tránh lỗi lặp màn hình View
             return View("HoiDap", danhSachCu);
         }
@@ -127,7 +120,7 @@ namespace DocConnect.Web.Controllers
             }
 
             // 2. Kiểm tra câu hỏi gốc có tồn tại không
-            var cauHoiGoc = await _context.HoiDaps.FindAsync(id);
+            var cauHoiGoc = await _hoiDapRepository.GetHoiDapByIdAsync(id);
             if (cauHoiGoc == null)
             {
                 return Json(new { success = false, message = "Không tìm thấy câu hỏi tương ứng." });
@@ -157,8 +150,7 @@ namespace DocConnect.Web.Controllers
                     AnDanh = false  
                 };
 
-                _context.HoiDaps.Add(cauTraLoi);
-                await _context.SaveChangesAsync();
+                await _hoiDapRepository.AddHoiDapAsync(cauTraLoi);
 
                 return Json(new { success = true, message = "Bác sĩ đã gửi tư vấn chuyên môn thành công!" });
             }

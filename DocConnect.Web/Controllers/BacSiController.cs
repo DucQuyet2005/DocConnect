@@ -10,26 +10,22 @@ namespace DocConnect.Web.Controllers
     [Route("BacSi")] // Định nghĩa Route gốc cho toàn bộ Controller
     public class BacSiController : Controller
     {
-        private readonly DocConnectDbContext _context;
-        public BacSiController(DocConnectDbContext context)
+        private readonly DocConnect.Web.Repositories.IBacSiRepository _bacSiRepository;
+        public BacSiController(DocConnect.Web.Repositories.IBacSiRepository bacSiRepository)
         {
-            _context = context;
+            _bacSiRepository = bacSiRepository;
         }
 
         // Nhận diện cả: /BacSi và /BacSi/Index
         [HttpGet("")]
         [HttpGet("Index")]
-        public IActionResult Index(int? chuyenKhoaId, string? ngayKham)
+        public async Task<IActionResult> Index(int? chuyenKhoaId, string? ngayKham)
         {
             int p_ChuyenKhoaId = chuyenKhoaId ?? 0;
 
-            var danhSachBacSi = _context.Database
-                .SqlQueryRaw<BacSiViewModel>(
-                    "EXEC GetDanhSachBacSi @ChuyenKhoaId = {0}",
-                    p_ChuyenKhoaId)
-                .ToList();
+            var danhSachBacSi = await _bacSiRepository.GetDanhSachBacSiAsync(p_ChuyenKhoaId);
 
-            ViewBag.ChuyenKhoas = _context.ChuyenKhoas.ToList();
+            ViewBag.ChuyenKhoas = await _bacSiRepository.GetChuyenKhoasAsync();
             ViewBag.SelectedChuyenKhoa = chuyenKhoaId;
             ViewBag.SelectedNgayKham = ngayKham;
 
@@ -38,18 +34,11 @@ namespace DocConnect.Web.Controllers
 
         // Nhận diện: /BacSi/ChiTiet/DR_USER_001
         [HttpGet("ChiTiet/{id}")]
-        public IActionResult ChiTiet(string id)
+        public async Task<IActionResult> ChiTiet(string id)
         {
             if (string.IsNullOrEmpty(id)) return NotFound();
 
-            var p_BacSiId = new SqlParameter("@BacSiId", SqlDbType.NVarChar, 50) { Value = id };
-
-            var chiTietBacSi = _context.Database
-                .SqlQueryRaw<BacSiViewModel>(
-                    "EXEC GetChiTietBacSi @BacSiId", 
-                    p_BacSiId)
-                .AsEnumerable()
-                .FirstOrDefault();
+            var chiTietBacSi = await _bacSiRepository.GetChiTietBacSiAsync(id);
 
             if (chiTietBacSi == null || string.IsNullOrEmpty(chiTietBacSi.Id))
             {

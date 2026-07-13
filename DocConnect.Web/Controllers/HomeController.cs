@@ -11,18 +11,16 @@ namespace DocConnect.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly DocConnectDbContext _context;
+        private readonly DocConnect.Web.Repositories.IBacSiRepository _bacSiRepository;
 
-        // Tiêm DbContext vào thông qua Constructor
-        public HomeController(DocConnectDbContext context)
+        // Tiêm Repository vào thông qua Constructor
+        public HomeController(DocConnect.Web.Repositories.IBacSiRepository bacSiRepository)
         {
-            _context = context;
+            _bacSiRepository = bacSiRepository;
         }
         public async Task<IActionResult> Index()
         {
-            var top5Doctors = await _context.Database
-                .SqlQueryRaw<BacSiViewModel>("EXEC GetTop5BacSi")
-                .ToListAsync();
+            var top5Doctors = await _bacSiRepository.GetTop5BacSiAsync();
             return View(top5Doctors);
         }
 
