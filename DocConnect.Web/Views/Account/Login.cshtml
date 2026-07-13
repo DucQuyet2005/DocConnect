@@ -1,0 +1,32 @@
+@model DocConnect.Web.Models.ViewModels.LoginViewModel
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4 border p-4 rounded shadow bg-white" style="border-top: 5px solid #004E9F !important;">
+        <h3 class="text-center fw-bold mb-4" style="color: #004E9F;">ĐĂNG NHẬP</h3>
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Email</label>
+                <input asp-for="Email" class="form-control" placeholder="example@gmail.com" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Mật khẩu</label>
+                <input asp-for="MatKhau" type="password" class="form-control" placeholder="******" />
+                <span asp-validation-for="MatKhau" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="GhiNho" class="form-check-input" />
+                <label class="form-check-label text-muted">Ghi nhớ đăng nhập</label>
+            </div>
+
+            <button type="submit" class="btn text-white w-100 py-2 fw-bold" style="background-color: #004E9F;">Đăng Nhập</button>
+        </form>
+        <div class="text-center mt-3">
+            <span class="text-muted">Chưa có tài khoản?</span> <a asp-action="Register" class="text-decoration-none" style="color: #004E9F;">Đăng ký ngay</a>
+        </div>
+    </div>
+</div>

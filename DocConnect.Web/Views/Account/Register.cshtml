@@ -1,0 +1,53 @@
+@model DocConnect.Web.Models.ViewModels.RegisterViewModel
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5 border p-4 rounded shadow bg-white" style="border-top: 5px solid #004E9F !important;">
+        <h3 class="text-center fw-bold mb-4" style="color: #004E9F;">ĐĂNG KÝ TÀI KHOẢN</h3>
+        <form asp-action="Register" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Họ và Tên</label>
+                <input asp-for="HoTen" class="form-control" placeholder="Nguyễn Văn A" />
+                <span asp-validation-for="HoTen" class="text-danger small"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Email</label>
+                <input asp-for="Email" class="form-control" placeholder="example@gmail.com" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Bạn tham gia với vai trò?</label>
+                <select asp-for="VaiTro" class="form-select">
+                    <option value="Customer">Người dùng (Khách hàng)</option>
+                    <option value="Doctor">Bác sĩ chuyên khoa</option>
+                </select>
+                <span asp-validation-for="VaiTro" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Số điện thoại</label>
+                <input asp-for="SoDienThoai" class="form-control" placeholder="0901234567" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Mật khẩu</label>
+                <input asp-for="MatKhau" type="password" class="form-control" placeholder="******" />
+                <span asp-validation-for="MatKhau" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nhập lại mật khẩu</label>
+                <input asp-for="NhapLaiMatKhau" type="password" class="form-control" placeholder="******" />
+                <span asp-validation-for="NhapLaiMatKhau" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn text-white w-100 py-2 fw-bold" style="background-color: #004E9F;">Đăng Ký</button>
+        </form>
+        <div class="text-center mt-3">
+            <span class="text-muted">Đã có tài khoản?</span> <a asp-action="Login" class="text-decoration-none" style="color: #004E9F;">Đăng nhập</a>
+        </div>
+    </div>
+</div>
