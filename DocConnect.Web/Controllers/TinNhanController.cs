@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace DocConnect.Web.Controllers
 {
@@ -19,6 +20,17 @@ namespace DocConnect.Web.Controllers
         public TinNhanController(DocConnect.Web.Repositories.ITinNhanRepository tinNhanRepository)
         {
             _tinNhanRepository = tinNhanRepository;
+        }
+
+        [HttpPost("LuuTrieuChungTamThoi")]
+        [Authorize]
+        public IActionResult LuuTrieuChungTamThoi(string trieuChung)
+        {
+            if (!string.IsNullOrEmpty(trieuChung))
+            {
+                HttpContext.Session.SetString("InitialSymptoms", trieuChung);
+            }
+            return Json(new { success = true });
         }
 
         [HttpPost("KhoiTaoPhien")]
@@ -69,6 +81,24 @@ namespace DocConnect.Web.Controllers
 
                 await _tinNhanRepository.AddPhienTuVanAsync(phien);
                 await _tinNhanRepository.SaveChangesAsync();
+
+                // Đọc triệu chứng ban đầu lưu từ Session (nếu có)
+                var symptoms = HttpContext.Session.GetString("InitialSymptoms");
+                if (!string.IsNullOrEmpty(symptoms))
+                {
+                    var firstMsg = new TinNhan
+                    {
+                        PhienTuVanId = phien.Id,
+                        NguoiGuiId = benhNhanId,
+                        NoiDung = $"[Triệu chứng ban đầu]: {symptoms}",
+                        LoaiTinNhan = "Text",
+                        ThoiGianGui = DateTime.Now,
+                        DaDoc = false
+                    };
+                    await _tinNhanRepository.AddTinNhanAsync(firstMsg);
+                    await _tinNhanRepository.SaveChangesAsync();
+                    HttpContext.Session.Remove("InitialSymptoms");
+                }
             }
 
             return RedirectToAction(nameof(CuocTroChuyen), new { id = phien.Id });
@@ -117,6 +147,24 @@ namespace DocConnect.Web.Controllers
             };
             await _tinNhanRepository.AddPhienTuVanAsync(phienMoi);
             await _tinNhanRepository.SaveChangesAsync();
+
+            // Đọc triệu chứng ban đầu lưu từ Session (nếu có)
+            var symptoms = HttpContext.Session.GetString("InitialSymptoms");
+            if (!string.IsNullOrEmpty(symptoms))
+            {
+                var firstMsg = new TinNhan
+                {
+                    PhienTuVanId = phienMoi.Id,
+                    NguoiGuiId = userId,
+                    NoiDung = $"[Triệu chứng ban đầu]: {symptoms}",
+                    LoaiTinNhan = "Text",
+                    ThoiGianGui = DateTime.Now,
+                    DaDoc = false
+                };
+                await _tinNhanRepository.AddTinNhanAsync(firstMsg);
+                await _tinNhanRepository.SaveChangesAsync();
+                HttpContext.Session.Remove("InitialSymptoms");
+            }
 
             return RedirectToAction(nameof(CuocTroChuyen), new { id = phienMoi.Id });
         }

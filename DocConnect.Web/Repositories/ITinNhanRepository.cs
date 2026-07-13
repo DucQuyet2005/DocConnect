@@ -15,5 +15,6 @@ namespace DocConnect.Web.Repositories
         Task<List<TinNhan>> GetTinNhansByPhienIdAsync(int phienId);
         Task<List<PhienTuVan>> GetPhienTuVansByBacSiIdAsync(string bacSiId);
         Task<TinNhan?> GetTinNhanCuoiAsync(int phienId);
+        Task AddTinNhanAsync(TinNhan tinNhan);
     }
 }

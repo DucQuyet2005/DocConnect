@@ -227,9 +227,9 @@
             <div class="card border-0 shadow-sm p-4 rounded-4 sticky-top border border-light" style="top: 100px; z-index: 20;">
                 <h6 class="fw-bold mb-3 text-dark text-center text-uppercase tracking-wide">Tư vấn trực tuyến</h6>
                 <p class="small text-muted text-center mb-4">Kết nối video call trực tiếp 1-1 với bác sĩ ngay trên ứng dụng di động DocConnect.</p>
-                <form asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="m-0">
+                <form id="formTuVan" asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="m-0">
                     <input type="hidden" name="bacSiId" value="@Model.Id" />
-                    <button type="submit" class="btn btn-main w-100 py-2.5 rounded-pill fw-bold shadow-sm text-decoration-none text-center d-block">
+                    <button type="button" class="btn btn-main w-100 py-2.5 rounded-pill fw-bold shadow-sm text-decoration-none text-center d-block" data-bs-toggle="modal" data-bs-target="#trieuChungTamThoiModal">
                         <i class="fa-solid fa-comment-medical me-2"></i> Nhắn tin tư vấn ngay
                     </button>
                 </form>
@@ -237,3 +237,60 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Nhập Triệu Chứng Ban Đầu -->
+<div class="modal fade" id="trieuChungTamThoiModal" tabindex="-1" aria-labelledby="trieuChungTamThoiModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="trieuChungTamThoiModalLabel">Nhập triệu chứng ban đầu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Hãy mô tả ngắn gọn tình trạng sức khỏe của bạn để bác sĩ nắm được thông tin trước khi bắt đầu cuộc tư vấn.</p>
+                <div class="mb-3">
+                    <label for="txtTrieuChungTamThoi" class="form-label fw-bold">Mô tả triệu chứng (Tùy chọn)</label>
+                    <textarea class="form-control" id="txtTrieuChungTamThoi" rows="4" placeholder="Ví dụ: Tôi bị đau đầu từ hôm qua, sốt nhẹ khoảng 38 độ..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnBoQuaTrieuChung">Bỏ qua & Tư vấn</button>
+                <button type="button" class="btn btn-primary" id="btnXacNhanTrieuChung">Bắt đầu tư vấn</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Khi nhấn nút "Bỏ qua & Tư vấn"
+            $('#btnBoQuaTrieuChung').click(function () {
+                $('#formTuVan').submit();
+            });
+
+            // Khi nhấn nút "Bắt đầu tư vấn" (Có nhập triệu chứng)
+            $('#btnXacNhanTrieuChung').click(function () {
+                var trieuChung = $('#txtTrieuChungTamThoi').val().trim();
+                if (trieuChung !== "") {
+                    // Gửi AJAX lưu triệu chứng vào Session trước
+                    $.ajax({
+                        url: '/TinNhan/LuuTrieuChungTamThoi',
+                        type: 'POST',
+                        data: { trieuChung: trieuChung },
+                        success: function (res) {
+                            // Sau khi lưu thành công, submit form khởi tạo phiên khám
+                            $('#formTuVan').submit();
+                        },
+                        error: function () {
+                            // Nếu lỗi AJAX, vẫn cho qua để không chặn trải nghiệm người dùng
+                            $('#formTuVan').submit();
+                        }
+                    });
+                } else {
+                    $('#formTuVan').submit();
+                }
+            });
+        });
+    </script>
+}

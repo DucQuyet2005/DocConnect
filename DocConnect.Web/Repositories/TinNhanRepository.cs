@@ -77,5 +77,11 @@ namespace DocConnect.Web.Repositories
                     .OrderByDescending(t => t.ThoiGianGui)
                     .FirstOrDefaultAsync();
         }
+
+        public async Task AddTinNhanAsync(TinNhan tinNhan)
+        {
+            _context.TinNhans.Add(tinNhan);
+            await Task.CompletedTask;
+        }
     }
 }
