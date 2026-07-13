@@ -86,9 +86,9 @@
 <div class="container">
     <div class="chat-container">
         <div class="chat-header d-flex justify-content-between align-items-center">
-            <span>Phiên tư vấn số: #@Model.Id - Trạng thái: @Model.TrangThai</span>
+            <span>Phiên tư vấn số: #@Model.Id - Trạng thái: @(Model.TrangThai == "Closed" ? "Đã kết thúc" : Model.TrangThai)</span>
             <div>
-                @if (User.IsInRole("Doctor"))
+                @if (User.IsInRole("Doctor") && Model.TrangThai != "Closed")
                 {
                     <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#endSessionModal">
                         <i class="fa-solid fa-flag-checkered"></i> Kết thúc ca khám
@@ -161,14 +161,23 @@
             }
         </div>
 
-        <div class="chat-footer">
-            <div class="input-group">
-                <input type="text" id="txtNoiDung" class="form-control" placeholder="Nhập nội dung tin nhắn..." aria-label="Nội dung">
-                <button class="btn btn-primary px-4" type="button" id="btnGui">
-                    Gửi <i class="fa-solid fa-paper-plane ms-1"></i>
-                </button>
+        @if (Model.TrangThai == "Closed")
+        {
+            <div class="chat-footer bg-light text-center py-3">
+                <span class="text-muted"><i class="fa-solid fa-lock me-1"></i> Phiên tư vấn này đã kết thúc. Bạn có thể xem lại lịch sử đoạn chat.</span>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="chat-footer">
+                <div class="input-group">
+                    <input type="text" id="txtNoiDung" class="form-control" placeholder="Nhập nội dung tin nhắn..." aria-label="Nội dung">
+                    <button class="btn btn-primary px-4" type="button" id="btnGui">
+                        Gửi <i class="fa-solid fa-paper-plane ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        }
     </div>
 </div>
 

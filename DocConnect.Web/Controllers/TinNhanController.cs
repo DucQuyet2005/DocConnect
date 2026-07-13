@@ -81,24 +81,24 @@ namespace DocConnect.Web.Controllers
 
                 await _tinNhanRepository.AddPhienTuVanAsync(phien);
                 await _tinNhanRepository.SaveChangesAsync();
+            }
 
-                // Đọc triệu chứng ban đầu lưu từ Session (nếu có)
-                var symptoms = HttpContext.Session.GetString("InitialSymptoms");
-                if (!string.IsNullOrEmpty(symptoms))
+            // Đọc triệu chứng ban đầu lưu từ Session (nếu có)
+            var symptoms = HttpContext.Session.GetString("InitialSymptoms");
+            if (!string.IsNullOrEmpty(symptoms))
+            {
+                var firstMsg = new TinNhan
                 {
-                    var firstMsg = new TinNhan
-                    {
-                        PhienTuVanId = phien.Id,
-                        NguoiGuiId = benhNhanId,
-                        NoiDung = $"[Triệu chứng ban đầu]: {symptoms}",
-                        LoaiTinNhan = "Text",
-                        ThoiGianGui = DateTime.Now,
-                        DaDoc = false
-                    };
-                    await _tinNhanRepository.AddTinNhanAsync(firstMsg);
-                    await _tinNhanRepository.SaveChangesAsync();
-                    HttpContext.Session.Remove("InitialSymptoms");
-                }
+                    PhienTuVanId = phien.Id,
+                    NguoiGuiId = benhNhanId,
+                    NoiDung = $"[Triệu chứng ban đầu]: {symptoms}",
+                    LoaiTinNhan = "Text",
+                    ThoiGianGui = DateTime.Now,
+                    DaDoc = false
+                };
+                await _tinNhanRepository.AddTinNhanAsync(firstMsg);
+                await _tinNhanRepository.SaveChangesAsync();
+                HttpContext.Session.Remove("InitialSymptoms");
             }
 
             return RedirectToAction(nameof(CuocTroChuyen), new { id = phien.Id });
@@ -115,38 +115,35 @@ namespace DocConnect.Web.Controllers
             }
             
             // 1. TÌM KIẾM phiên hiện có trước (quan trọng nhất)
-            var phienTonTai = await _tinNhanRepository.GetPhienTuVanActiveAsync(id, userId);
+            var phien = await _tinNhanRepository.GetPhienTuVanActiveAsync(id, userId);
 
-            // 2. Nếu đã có phiên rồi, trả về luôn, không tạo mới
-            if (phienTonTai != null)
+            // 2. Nếu chưa có, mới tiến hành tạo mới
+            if (phien == null)
             {
-                return RedirectToAction(nameof(CuocTroChuyen), new { id = phienTonTai.Id });
+                var hoSoBacSi = await _tinNhanRepository.GetHoSoBacSiByUserIdAsync(id);
+                if (hoSoBacSi == null) return NotFound();
+
+                var lichHen = new LichHen
+                {
+                    NguoiDungId = userId,
+                    BacSiId = hoSoBacSi.Id,
+                    ThoiGianBatDau = DateTime.Now,
+                    ThoiGianKetThuc = DateTime.Now.AddHours(1),
+                    TrangThai = "Approved"
+                };
+                await _tinNhanRepository.AddLichHenAsync(lichHen);
+                await _tinNhanRepository.SaveChangesAsync();
+
+                phien = new PhienTuVan {
+                    LichHenId = lichHen.Id,
+                    BacSiId = id,
+                    BenhNhanId = userId,
+                    ThoiGianBatDauThucTe = DateTime.Now,
+                    TrangThai = "ChoTraLoi"
+                };
+                await _tinNhanRepository.AddPhienTuVanAsync(phien);
+                await _tinNhanRepository.SaveChangesAsync();
             }
-
-            // 3. Nếu chưa có, mới tiến hành tạo mới
-            var hoSoBacSi = await _tinNhanRepository.GetHoSoBacSiByUserIdAsync(id);
-            if (hoSoBacSi == null) return NotFound();
-
-            var lichHen = new LichHen
-            {
-                NguoiDungId = userId,
-                BacSiId = hoSoBacSi.Id,
-                ThoiGianBatDau = DateTime.Now,
-                ThoiGianKetThuc = DateTime.Now.AddHours(1),
-                TrangThai = "Approved"
-            };
-            await _tinNhanRepository.AddLichHenAsync(lichHen);
-            await _tinNhanRepository.SaveChangesAsync();
-
-            var phienMoi = new PhienTuVan {
-                LichHenId = lichHen.Id,
-                BacSiId = id,
-                BenhNhanId = userId,
-                ThoiGianBatDauThucTe = DateTime.Now,
-                TrangThai = "ChoTraLoi"
-            };
-            await _tinNhanRepository.AddPhienTuVanAsync(phienMoi);
-            await _tinNhanRepository.SaveChangesAsync();
 
             // Đọc triệu chứng ban đầu lưu từ Session (nếu có)
             var symptoms = HttpContext.Session.GetString("InitialSymptoms");
@@ -154,7 +151,7 @@ namespace DocConnect.Web.Controllers
             {
                 var firstMsg = new TinNhan
                 {
-                    PhienTuVanId = phienMoi.Id,
+                    PhienTuVanId = phien.Id,
                     NguoiGuiId = userId,
                     NoiDung = $"[Triệu chứng ban đầu]: {symptoms}",
                     LoaiTinNhan = "Text",
@@ -166,7 +163,7 @@ namespace DocConnect.Web.Controllers
                 HttpContext.Session.Remove("InitialSymptoms");
             }
 
-            return RedirectToAction(nameof(CuocTroChuyen), new { id = phienMoi.Id });
+            return RedirectToAction(nameof(CuocTroChuyen), new { id = phien.Id });
         }
 
         [HttpGet("CuocTroChuyen/{id?}")]
