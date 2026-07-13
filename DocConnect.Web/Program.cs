@@ -23,6 +23,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
     });
 
+// Cấu hình Session
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
@@ -36,6 +45,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 // Đảm bảo đặt 2 dòng này nằm ĐÚNG thứ tự và TRƯỚC UseAuthorization
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles(); // Kích hoạt đọc file tĩnh như hình ảnh, CSS

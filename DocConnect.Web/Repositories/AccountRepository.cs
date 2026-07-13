@@ -29,5 +29,16 @@ namespace DocConnect.Web.Repositories
         {
             return await _context.NguoiDungs.FirstOrDefaultAsync(u => u.Email == email);
         }
+
+        public async Task UpdateUserAsync(NguoiDung user)
+        {
+            _context.NguoiDungs.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<NguoiDung?> GetUserByIdAsync(string id)
+        {
+            return await _context.NguoiDungs.FirstOrDefaultAsync(u => u.Id == id);
+        }
     }
 }

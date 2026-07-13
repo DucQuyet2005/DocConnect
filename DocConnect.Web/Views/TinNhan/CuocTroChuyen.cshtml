@@ -87,7 +87,52 @@
     <div class="chat-container">
         <div class="chat-header d-flex justify-content-between align-items-center">
             <span>Phiên tư vấn số: #@Model.Id - Trạng thái: @Model.TrangThai</span>
-            <a href="/BacSi" class="btn btn-sm btn-outline-light text-decoration-none">Thoát phòng</a>
+            <div>
+                @if (User.IsInRole("Doctor"))
+                {
+                    <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#endSessionModal">
+                        <i class="fa-solid fa-flag-checkered"></i> Kết thúc ca khám
+                    </button>
+                }
+                <a href="/BacSi" class="btn btn-sm btn-outline-light text-decoration-none">Thoát phòng</a>
+            </div>
+        </div>
+
+        <!-- Modal Nhập Hồ Sơ Bệnh Án -->
+        <div class="modal fade" id="endSessionModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title fw-bold">KẾT THÚC PHIÊN & LẬP BỆNH ÁN</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-dark text-start">
+                        <form id="formHoSo">
+                            <input type="hidden" id="PhienTuVanId" value="@Model.Id" />
+                            <input type="hidden" id="BenhNhanId" value="@Model.BenhNhanId" />
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Triệu chứng lâm sàng</label>
+                                <textarea class="form-control" id="TrieuChung" rows="2" placeholder="Sốt, ho, khó thở..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-primary">Kết luận / Chẩn đoán</label>
+                                <textarea class="form-control" id="KetLuan" rows="3" placeholder="Ghi rõ chẩn đoán bệnh..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-success">Đơn thuốc & Lời dặn</label>
+                                <textarea class="form-control" id="DonThuoc" rows="3" placeholder="Thuốc A x 2 viên/ngày..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="button" class="btn btn-primary fw-bold" id="btnSubmitHoSo">
+                            <i class="fa-solid fa-save"></i> Lưu bệnh án & Kết thúc
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="chat-subheader p-2 bg-light border-bottom text-center">
@@ -208,6 +253,35 @@
                 if (e.which == 13) { // Phím Enter mã là 13
                     thucHienGuiTinNhan();
                 }
+            });
+
+            // Hành động 3: Bác sĩ nộp bệnh án
+            $('#btnSubmitHoSo').click(function () {
+                var data = {
+                    PhienTuVanId: parseInt($('#PhienTuVanId').val()),
+                    BenhNhanId: $('#BenhNhanId').val(),
+                    TrieuChung: $('#TrieuChung').val(),
+                    KetLuan: $('#KetLuan').val() + '\n--- Đơn thuốc/Lời dặn: ---\n' + $('#DonThuoc').val()
+                };
+
+                if ($('#KetLuan').val().trim() === "") {
+                    alert("Vui lòng nhập kết luận chẩn đoán!");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/HoSo/KetThucCaKham',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        alert("Đã lưu hồ sơ thành công!");
+                        window.location.href = '/BacSi'; // Điều hướng bác sĩ về trang chủ
+                    },
+                    error: function (err) {
+                        alert("Lỗi khi lưu bệnh án: " + err.responseText);
+                    }
+                });
             });
 
         });

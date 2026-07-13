@@ -20,11 +20,26 @@
 
             <div class="mb-3">
                 <label class="form-label fw-semibold">Bạn tham gia với vai trò?</label>
-                <select asp-for="VaiTro" class="form-select">
+                <select asp-for="VaiTro" class="form-select" id="roleSelector">
                     <option value="Customer">Người dùng (Khách hàng)</option>
                     <option value="Doctor">Bác sĩ chuyên khoa</option>
                 </select>
                 <span asp-validation-for="VaiTro" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3" id="chuyenKhoaContainer" style="display: none;">
+                <label class="form-label fw-semibold text-primary">Chuyên khoa (Dành cho Bác sĩ)</label>
+                <select asp-for="ChuyenKhoaId" class="form-select">
+                    <option value="">-- Chọn chuyên khoa --</option>
+                    @if (ViewBag.ChuyenKhoas != null)
+                    {
+                        foreach (var ck in ViewBag.ChuyenKhoas)
+                        {
+                            <option value="@ck.Id">@ck.TenChuyenKhoa</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="ChuyenKhoaId" class="text-danger small"></span>
             </div>
 
             <div class="mb-3">
@@ -51,3 +66,27 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            function toggleChuyenKhoa() {
+                if ($('#roleSelector').val() === 'Doctor') {
+                    $('#chuyenKhoaContainer').slideDown();
+                } else {
+                    $('#chuyenKhoaContainer').slideUp();
+                    $('#ChuyenKhoaId').val(''); // Reset value
+                }
+            }
+
+            // On load
+            toggleChuyenKhoa();
+
+            // On change
+            $('#roleSelector').change(function () {
+                toggleChuyenKhoa();
+            });
+        });
+    </script>
+}

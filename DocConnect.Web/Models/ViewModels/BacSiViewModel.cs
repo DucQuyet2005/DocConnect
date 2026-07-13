@@ -11,5 +11,6 @@ namespace DocConnect.Web.Models.ViewModels
         public int ChuyenKhoaId { get; set; }
         public string KinhNghiem { get; set; } = string.Empty;
         public string GioiThieu { get; set; } = string.Empty;
+        public bool? TrangThai { get; set; }
     }
 }

@@ -1,0 +1,75 @@
+@model List<DocConnect.Web.Models.Entities.HoSoSucKhoe>
+
+@{
+    ViewData["Title"] = "Quản lý Hồ sơ sức khỏe";
+}
+
+<div class="container mt-5 mb-5">
+    <h3 class="fw-bold mb-4" style="color:#004E9F;"><i class="fa-solid fa-notes-medical"></i> Quản lý Hồ sơ Sức khỏe</h3>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if(Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info shadow-sm">
+            <i class="fa-solid fa-info-circle me-2"></i> Bạn chưa lập hồ sơ bệnh án nào. Hồ sơ bệnh án được tạo tự động khi bạn kết thúc một phiên khám bệnh.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Mã Phiên</th>
+                                <th>Thời gian</th>
+                                <th>Triệu chứng</th>
+                                <th>Chẩn đoán & Lời dặn</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var hoso in Model)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary">#@hoso.PhienTuVanId</span></td>
+                                    <td>@hoso.ThoiGian.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;" title="@hoso.TrieuChung">
+                                            @(string.IsNullOrEmpty(hoso.TrieuChung) ? "Không có" : hoso.TrieuChung)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 300px;" title="@hoso.KetLuan">
+                                            @hoso.KetLuan
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <a asp-action="Edit" asp-route-id="@hoso.Id" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@hoso.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ bệnh án này?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

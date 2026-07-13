@@ -23,5 +23,8 @@ namespace DocConnect.Web.Models.ViewModels
         public required string SoDienThoai { get; set; }
         [Required(ErrorMessage = "Vui lòng chọn vai trò")]
         public required string VaiTro { get; set; }
+
+        // Bổ sung cho đăng ký Bác sĩ
+        public int? ChuyenKhoaId { get; set; }
     }
 }

@@ -1,0 +1,35 @@
+@model List<DocConnect.Web.Models.Entities.HoSoSucKhoe>
+@{
+    ViewData["Title"] = "Lịch sử bệnh án";
+}
+
+<div class="container mt-5">
+    <h3 class="fw-bold mb-4" style="color:#004E9F;"><i class="fa-solid fa-notes-medical"></i> Lịch Sử Khám Bệnh Của Bạn</h3>
+    
+    @if(Model.Count == 0)
+    {
+        <div class="alert alert-info">Bạn chưa có hồ sơ bệnh án nào.</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach(var hoso in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-start border-primary border-4 rounded-3">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">Khám ngày: @hoso.ThoiGian.ToString("dd/MM/yyyy HH:mm")</h5>
+                            <hr />
+                            <p class="mb-1"><strong><i class="fa-solid fa-user-doctor text-primary"></i> Bác sĩ:</strong> @hoso.TenBacSi</p>
+                            <p class="mb-1"><strong><i class="fa-solid fa-virus text-danger"></i> Triệu chứng:</strong> @hoso.TrieuChung</p>
+                            <div class="bg-light p-3 mt-3 rounded">
+                                <strong><i class="fa-solid fa-prescription text-success"></i> Chẩn đoán & Kê đơn:</strong>
+                                <p class="mb-0 mt-2" style="white-space: pre-line;">@hoso.KetLuan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

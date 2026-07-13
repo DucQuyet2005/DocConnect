@@ -8,5 +8,7 @@ namespace DocConnect.Web.Repositories
         Task<bool> EmailExistsAsync(string email);
         Task AddUserAsync(NguoiDung user);
         Task<NguoiDung?> GetUserByEmailAsync(string email);
+        Task UpdateUserAsync(NguoiDung user);
+        Task<NguoiDung?> GetUserByIdAsync(string id);
     }
 }

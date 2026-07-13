@@ -54,7 +54,9 @@
         border: 3px solid var(--brand-light); 
         display: block;
     }
-    .online-indicator { position: absolute; bottom: 4px; right: 8px; width: 14px; height: 14px; background-color: #22c55e; border: 2px solid white; border-radius: 50%; z-index: 2; }
+    .online-indicator { position: absolute; bottom: 4px; right: 8px; width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; z-index: 2; }
+    .online-indicator.online { background-color: #22c55e; }
+    .online-indicator.offline { background-color: #94a3b8; }
 
     .dr-name { font-weight: 700; font-size: 18px; color: #1e293b; margin-bottom: 5px; }
     .dr-specialty { color: var(--brand-color); font-size: 13px; font-weight: 600; background: var(--brand-light); display: inline-block; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }
@@ -130,7 +132,7 @@
                                          class="dr-avatar" 
                                          onerror="this.onerror=null; this.src='/images/default-avatar.png';" 
                                          alt="BS. @dr.HoTen" />
-                                    <div class="online-indicator"></div>
+                                    <div class="online-indicator @(dr.TrangThai == true ? "online" : "offline")"></div>
                                 </div>
                                 
                                 <div class="dr-name">@dr.HoTen</div>
