@@ -191,6 +191,35 @@
         border-color: var(--brand-color);
         color: white;
     }
+    .doctor-answer-card{
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #0d6efd;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+.doctor-answer-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.doctor-answer-content{
+    white-space:pre-line;
+    line-height:1.7;
+    color:#444;
+}
+
+.qa-answers-list{
+    margin-top:15px;
+}
+
+.qa-answers-list .doctor-answer-card:last-child{
+    margin-bottom:0;
+}
 </style>
 
 <section class="hoidap-banner">
@@ -245,7 +274,18 @@
 
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top border-light">
                             <div>
-                                <a href="#" class="badge-specialty">Chuyên khoa</a>
+                                @if (item.ChuyenKhoa != null)
+                                {
+                                    <span class="badge-specialty">
+                                        @item.ChuyenKhoa.TenChuyenKhoa
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge-specialty">
+                                        Chưa chọn
+                                    </span>
+                                }
                             </div>
                             
                             <div class="d-flex align-items-center gap-3">
@@ -270,24 +310,43 @@
                             </div>
                         </div>
 
-                        <div class="qa-answers-list mt-3" id="answers-container-@item.Id">
-                            @if (danhSachCauTraLoi.Any())
-                            {
-                                @foreach (var traLoi in danhSachCauTraLoi)
-                                {
-                                    <div class="p-3 mb-2 rounded-3" style="background-color: #f8fafc; border-left: 4px solid var(--brand-color);">
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span class="fw-bold text-dark small">
-                                                <i class="fa-solid fa-user-md text-primary me-1"></i> 
-                                                Bác sĩ tư vấn
-                                            </span>
-                                            <span class="text-muted" style="font-size: 11px;">@traLoi.NgayTao.ToString("dd/MM/yyyy HH:mm")</span>
-                                        </div>
-                                        <div class="text-secondary small" style="white-space: pre-line;">@traLoi.NoiDung</div>
-                                    </div>
-                                }
-                            }
+                        @if (danhSachCauTraLoi.Any())
+{
+    <div class="mt-3">
+    <button class="btn btn-sm btn-outline-primary rounded-pill view-answers-btn-@item.Id @(danhSachCauTraLoi.Any() ? "" : "d-none")"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#answers-@item.Id">
+        <i class="fa-solid fa-comments me-1"></i>
+        Xem <span id="btn-comment-count-@item.Id">@danhSachCauTraLoi.Count</span> câu trả lời
+    </button>
+
+    <div class="collapse mt-3" id="answers-@item.Id">
+        <div class="qa-answers-list" id="answers-container-@item.Id">
+            @if (danhSachCauTraLoi.Any())
+            {
+                @foreach (var traLoi in danhSachCauTraLoi)
+                {
+                    <div class="doctor-answer-card">
+                        <div class="doctor-answer-header">
+                            <div>
+                                <i class="fa-solid fa-user-doctor text-primary me-1"></i>
+                                <strong>BS. @traLoi.NguoiDung?.HoTen</strong>
+                            </div>
+                            <small class="text-muted">
+                                @traLoi.NgayTao.ToString("dd/MM/yyyy HH:mm")
+                            </small>
                         </div>
+                        <div class="doctor-answer-content">
+                            @traLoi.NoiDung
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+    }
 
                         @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Doctor"))
                         {
@@ -354,12 +413,16 @@
 
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Chọn chuyên khoa</label>
-                        <select class="form-select" name="ChuyenKhoaId">
-                            <option value="">-- Chọn chuyên khoa phù hợp --</option>
-                            <option value="1">Nội tổng hợp</option>
-                            <option value="2">Nội Nhi</option>
-                            <option value="3">Sản phụ khoa</option>
-                            <option value="4">Chấn thương chỉnh hình</option>
+                       <select class="form-select" name="ChuyenKhoaId">
+
+                        <option value="">-- Chọn chuyên khoa --</option>
+
+                        @foreach (var ck in ViewBag.ChuyenKhoas)
+                        {
+                            <option value="@ck.Id">
+                                @ck.TenChuyenKhoa
+                            </option>
+                        }
                         </select>
                     </div>
 
@@ -414,58 +477,73 @@
     }
 
     function guiCauTraLoi(id) {
-        let answerText = $('#txtReplyContent-' + id).val();
+    let answerText = $('#txtReplyContent-' + id).val();
 
-        if (!answerText.trim()) {
-            alert('Vui lòng điền nội dung câu trả lời tư vấn!');
-            return;
-        }
-
-        $.ajax({
-            url: '/HoiDap/TraLoiAjax',
-            type: 'POST',
-            data: { 
-                id: id,
-                noiDungTraLoi: answerText
-            },
-            success: function (response) {
-                if (response.success) {
-                    alert(response.message);
-                    
-                    // Xóa trắng vùng nhập và ẩn khung gõ
-                    $('#txtReplyContent-' + id).val('');
-                    $('#collapseReply-' + id).collapse('hide');
-
-                    // Cập nhật giao diện theo thời gian thực (Render động câu trả lời mới vừa lưu vào cây DOM)
-                    let now = new Date();
-                    let timeStr = ("0" + now.getDate()).slice(-2) + "/" + ("0" + (now.getMonth() + 1)).slice(-2) + "/" + now.getFullYear() + " " + ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2);
-                    
-                    let htmlNewAnswer = `
-                        <div class="p-3 mb-2 rounded-3" style="background-color: #f8fafc; border-left: 4px solid var(--brand-color);">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold text-dark small">
-                                    <i class="fa-solid fa-user-md text-primary me-1"></i> 
-                                    Bác sĩ tư vấn
-                                </span>
-                                <span class="text-muted" style="font-size: 11px;">${timeStr}</span>
-                            </div>
-                            <div class="text-secondary small" style="white-space: pre-line;">${answerText}</div>
-                        </div>
-                    `;
-                    
-                    // Kéo câu trả lời mới hiển thị lên ngay lập tức
-                    $('#answers-container-' + id).append(htmlNewAnswer);
-
-                    // Tăng số lượng đếm câu trả lời lên +1
-                    let currentComments = parseInt($('#comment-count-' + id).text());
-                    $('#comment-count-' + id).text(currentComments + 1);
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function () {
-                alert('Đã xảy ra lỗi khi gửi dữ liệu tư vấn.');
-            }
-        });
+    if (!answerText.trim()) {
+        alert('Vui lòng điền nội dung câu trả lời tư vấn!');
+        return;
     }
+
+    $.ajax({
+        url: '/HoiDap/TraLoiAjax',
+        type: 'POST',
+        data: { 
+            id: id,
+            noiDungTraLoi: answerText
+        },
+        success: function (response) {
+            if (response.success) {
+                alert(response.message);
+                
+                // Xóa trắng vùng nhập và ẩn khung gõ
+                $('#txtReplyContent-' + id).val('');
+                $('#collapseReply-' + id).collapse('hide');
+
+                // Định dạng thời gian hiện tại hiển thị lên giao diện
+                let now = new Date();
+                let timeStr = ("0" + now.getDate()).slice(-2) + "/" + ("0" + (now.getMonth() + 1)).slice(-2) + "/" + now.getFullYear() + " " + ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2);
+                
+                // Tạo chuỗi HTML giao diện câu trả lời mới
+                let htmlNewAnswer = `
+                <div class="doctor-answer-card">
+                    <div class="doctor-answer-header">
+                        <div>
+                            <i class="fa-solid fa-user-doctor text-primary me-1"></i>
+                            <strong>BS. ${response.tenBacSi || 'Tư vấn'}</strong>
+                        </div>
+                        <small class="text-muted">${timeStr}</small>
+                    </div>
+                    <div class="doctor-answer-content">${answerText}</div>
+                </div>`;
+
+                // Thêm câu trả lời mới vào vùng chứa dữ liệu
+                $('#answers-container-' + id).append(htmlNewAnswer);
+
+                // Hiển thị khung danh sách câu trả lời ra
+                let collapseEl = document.getElementById('answers-' + id);
+                if (collapseEl) {
+                    let collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl);
+                    collapse.show();
+                }
+
+                // Cập nhật số lượng đếm câu trả lời ở phần meta câu hỏi
+                let currentComments = parseInt($('#comment-count-' + id).text()) || 0;
+                $('#comment-count-' + id).text(currentComments + 1);
+
+                // Cập nhật và hiển thị nút "Xem X câu trả lời" nếu trước đó nó đang ẩn
+                let btnCount = $('#btn-comment-count-' + id);
+                if (btnCount.length) {
+                    btnCount.text(currentComments + 1);
+                }
+                $('.view-answers-btn-' + id).removeClass('d-none');
+
+            } else {
+                alert(response.message);
+            }
+        },
+        error: function () {
+            alert('Đã xảy ra lỗi khi gửi dữ liệu tư vấn.');
+        }
+    });
+}
 </script>

@@ -34,5 +34,7 @@ namespace DocConnect.Web.Models.Entities
 
         [ForeignKey("NguoiDungId")]
         public virtual NguoiDung? NguoiDung { get; set; } // Đã sửa từ DocConnectDbContext thành NguoiDung
+        [ForeignKey(nameof(ChuyenKhoaId))]
+        public virtual ChuyenKhoa? ChuyenKhoa { get; set; }
     }
 }

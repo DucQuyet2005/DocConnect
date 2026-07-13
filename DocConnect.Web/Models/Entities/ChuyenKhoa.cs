@@ -11,5 +11,6 @@ namespace DocConnect.Web.Models.Entities
 
         // Định nghĩa mối quan hệ: Một chuyên khoa có nhiều hồ sơ bác sĩ
         public virtual ICollection<HoSoBacSi> HoSoBacSis { get; set; } = new List<HoSoBacSi>();
+        public virtual ICollection<HoiDap> HoiDaps { get; set; }= new List<HoiDap>();
     }
 }

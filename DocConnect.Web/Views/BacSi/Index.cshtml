@@ -54,9 +54,7 @@
         border: 3px solid var(--brand-light); 
         display: block;
     }
-    .online-indicator { position: absolute; bottom: 4px; right: 8px; width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; z-index: 2; }
-    .online-indicator.online { background-color: #22c55e; }
-    .online-indicator.offline { background-color: #94a3b8; }
+    .online-indicator { position: absolute; bottom: 4px; right: 8px; width: 14px; height: 14px; background-color: #22c55e; border: 2px solid white; border-radius: 50%; z-index: 2; }
 
     .dr-name { font-weight: 700; font-size: 18px; color: #1e293b; margin-bottom: 5px; }
     .dr-specialty { color: var(--brand-color); font-size: 13px; font-weight: 600; background: var(--brand-light); display: inline-block; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }
@@ -88,34 +86,38 @@
     <div class="container text-center">
         <h2 class="fw-bold text-brand mb-2">Tư vấn trực tuyến cùng Bác sĩ</h2>
         <p class="text-muted mb-4">Hỏi đáp trực tiếp, nhận hướng dẫn chăm sóc sức khỏe chuẩn y khoa qua Box chat</p>
-        <div class="search-dr-box">
-            <input type="text" placeholder="Tìm tên bác sĩ hoặc chuyên khoa cần hỗ trợ...">
+        <form method="get" asp-controller="BacSi" asp-action="Index" class="search-dr-box mt-3">
+        <input type="text"
+           name="keyword"
+           value="@ViewBag.Keyword"
+           placeholder="Tìm bác sĩ hoặc chuyên khoa..." />
+
+            <button type="submit"
+            style="position:absolute;right:18px;top:12px;border:none;background:none;">
             <i class="fa-solid fa-magnifying-glass"></i>
-        </div>
+            </button>
+        </form>
     </div>
 </section>
 
-<div class="filter-bar sticky-top">
-    <div class="container">
-        <form method="get" asp-controller="BacSi" asp-action="Index" class="d-flex flex-wrap gap-3 justify-content-center align-items-center">
-            
-            <select name="chuyenKhoaId" class="filter-item" onchange="this.form.submit()">
-                <option value="">-- Tất cả chuyên khoa --</option>
-                @if (ViewBag.ChuyenKhoas != null)
+    <form method="get" asp-controller="BacSi" asp-action="Index" class="d-flex flex-wrap gap-3 justify-content-center align-items-center">
+        <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
+
+        <select name="chuyenKhoaId" class="filter-item" onchange="this.form.submit()">
+            <option value="">-- Tất cả chuyên khoa --</option>
+            @if (ViewBag.ChuyenKhoas != null)
+            {
+                foreach (var ck in ViewBag.ChuyenKhoas)
                 {
-                    foreach (var ck in ViewBag.ChuyenKhoas)
-                    {
-                        <!option value="@ck.Id" @(ViewBag.SelectedChuyenKhoa == ck.Id ? "selected" : "")>@ck.TenChuyenKhoa</!option>
-                    }
+                    <!option value="@ck.Id" @(ViewBag.SelectedChuyenKhoa == ck.Id ? "selected" : "")>@ck.TenChuyenKhoa</!option>
                 }
-            </select>
+            }
+        </select>
 
-            <input type="date" name="ngayKham" value="@ViewBag.SelectedNgayKham" class="filter-item" onchange="this.form.submit()" />
+        <input type="date" name="ngayKham" value="@ViewBag.SelectedNgayKham" class="filter-item" onchange="this.form.submit()" />
 
-            <a href="/BacSi" class="btn btn-link btn-sm text-secondary text-decoration-none"><i class="fa-solid fa-arrow-rotate-left me-1"></i>Xóa lọc</a>
-        </form>
-    </div>
-</div>
+        <a href="/BacSi" class="btn btn-link btn-sm text-secondary text-decoration-none"><i class="fa-solid fa-arrow-rotate-left me-1"></i>Xóa lọc</a>
+    </form>
 
 <section class="py-5 bg-light-subtle">
     <div class="container">
@@ -132,10 +134,12 @@
                                          class="dr-avatar" 
                                          onerror="this.onerror=null; this.src='/images/default-avatar.png';" 
                                          alt="BS. @dr.HoTen" />
-                                    <div class="online-indicator @(dr.TrangThai == true ? "online" : "offline")"></div>
+                                    <div class="online-indicator"></div>
                                 </div>
                                 
-                                <div class="dr-name">@dr.HoTen</div>
+                                <div class="dr-name">
+                                    @(dr.HoTen.StartsWith("BS.") ? dr.HoTen : $"BS. {dr.HoTen}")
+                                </div>
                                 <div class="dr-specialty">@dr.TenChuyenKhoa</div>
                                 <div class="dr-exp"><i class="fa-solid fa-briefcase text-secondary me-1"></i> @dr.KinhNghiem</div>
                                 

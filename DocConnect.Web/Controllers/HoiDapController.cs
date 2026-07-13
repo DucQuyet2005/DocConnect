@@ -14,12 +14,12 @@ namespace DocConnect.Web.Controllers
 {
     public class HoiDapController : Controller
     {
-        private readonly DocConnect.Web.Repositories.IHoiDapRepository _hoiDapRepository;
+        private readonly DocConnectDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public HoiDapController(DocConnect.Web.Repositories.IHoiDapRepository hoiDapRepository, IWebHostEnvironment webHostEnvironment)
+        public HoiDapController(DocConnectDbContext context, IWebHostEnvironment webHostEnvironment)
         {
-            _hoiDapRepository = hoiDapRepository;
+            _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
 
@@ -28,9 +28,17 @@ namespace DocConnect.Web.Controllers
         public async Task<IActionResult> HoiDap()
         {
             // Lấy toàn bộ danh sách (gồm cả câu hỏi gốc và các câu trả lời "RE: ...") đã được duyệt
-            var tatCaDuLieu = await _hoiDapRepository.GetTatCaHoiDapDaDuyetAsync();
+           ViewBag.ChuyenKhoas = await _context.ChuyenKhoas
+                .OrderBy(x => x.TenChuyenKhoa)
+                .ToListAsync();
 
-            return View(tatCaDuLieu);
+            var tatCaDuLieu = await _context.HoiDaps
+                .Include(x => x.ChuyenKhoa)
+                .Include(x => x.NguoiDung)
+                .Where(x => x.DaDuyet)
+                .OrderByDescending(x => x.NgayTao)
+                .ToListAsync();
+                return View(tatCaDuLieu);
         }
 
         // POST: /HoiDap/DangCauHoi
@@ -88,7 +96,8 @@ namespace DocConnect.Web.Controllers
                     AnDanh = true
                 };
 
-                await _hoiDapRepository.AddHoiDapAsync(entityHoiDap);
+                _context.HoiDaps.Add(entityHoiDap);
+                await _context.SaveChangesAsync();
 
                 return RedirectToAction("HoiDap");
             }
@@ -99,67 +108,49 @@ namespace DocConnect.Web.Controllers
 
         private async Task<IActionResult> PrepareViewWithError(HoiDapViewModel model)
         {
-            var danhSachCu = await _hoiDapRepository.GetTatCaHoiDapDaDuyetAsync();
-            // Trả lại dữ liệu danh sách để tránh lỗi lặp màn hình View
+            ViewBag.ChuyenKhoas = await _context.ChuyenKhoas
+                .OrderBy(x => x.TenChuyenKhoa)
+                .ToListAsync();
+
+            var danhSachCu = await _context.HoiDaps
+                .Include(x => x.ChuyenKhoa)
+                .Include(x => x.NguoiDung)
+                .Where(x => x.DaDuyet)
+                .OrderByDescending(x => x.NgayTao)
+                .ToListAsync();
+
             return View("HoiDap", danhSachCu);
         }
 
         // POST: /HoiDap/TraLoiAjax
         [HttpPost]
-        public async Task<IActionResult> TraLoiAjax(int id, string noiDungTraLoi)
-        {
-            // 1. Kiểm tra quyền Doctor
-            if (User.Identity?.IsAuthenticated != true || !User.IsInRole("Doctor"))
-            {
-                return Json(new { success = false, message = "Chỉ bác sĩ mới có quyền trả lời!" });
-            }
+public async Task<IActionResult> TraLoiAjax(int id, string noiDungTraLoi)
+{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (string.IsNullOrWhiteSpace(noiDungTraLoi))
-            {
-                return Json(new { success = false, message = "Nội dung trả lời không được để trống." });
-            }
+    var user = await _context.NguoiDungs
+        .FirstOrDefaultAsync(x => x.Id == userId);
 
-            // 2. Kiểm tra câu hỏi gốc có tồn tại không
-            var cauHoiGoc = await _hoiDapRepository.GetHoiDapByIdAsync(id);
-            if (cauHoiGoc == null)
-            {
-                return Json(new { success = false, message = "Không tìm thấy câu hỏi tương ứng." });
-            }
+    // Tạo câu trả lời
+    var traLoi = new HoiDap
+    {
+        TieuDe = $"RE: {id}",
+        NoiDung = noiDungTraLoi,
+        NgayTao = DateTime.Now,
+        NguoiDungId = userId,
+        DaDuyet = true
+    };
 
-            // 3. Lấy Id của Bác sĩ đang đăng nhập
-            var bacSiId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
-            if (string.IsNullOrEmpty(bacSiId))
-            {
-                return Json(new { success = false, message = "Không xác định được danh tính bác sĩ. Vui lòng đăng nhập lại!" });
-            }
+    _context.HoiDaps.Add(traLoi);
+    await _context.SaveChangesAsync();
 
-            try
-            {
-                // 4. Tạo một bản ghi HoiDap mới đóng vai trò là CÂU TRẢ LỜI của bác sĩ
-                var cauTraLoi = new HoiDap
-                {
-                    // Lưu cấu trúc liên kết ngược "RE: [Id_Cau_Hoi_Goc]" vào trường TieuDe
-                    TieuDe = $"RE: {id}", 
-                    NoiDung = noiDungTraLoi,
-                    Tuoi = 0, 
-                    GioiTinh = "Bác sĩ",
-                    ChuyenKhoaId = cauHoiGoc.ChuyenKhoaId, 
-                    NguoiDungId = bacSiId, 
-                    NgayTao = DateTime.Now,
-                    DaDuyet = true, 
-                    AnDanh = false  
-                };
-
-                await _hoiDapRepository.AddHoiDapAsync(cauTraLoi);
-
-                return Json(new { success = true, message = "Bác sĩ đã gửi tư vấn chuyên môn thành công!" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Lỗi khi lưu câu trả lời: " + ex.Message });
-            }
-        }
-
+    return Json(new
+    {
+        success = true,
+        message = "Đã trả lời thành công",
+        tenBacSi = user?.HoTen
+    });
+}
         // POST: /HoiDap/ThaTimAjax
         [HttpPost]
         public IActionResult ThaTimAjax(int id)
