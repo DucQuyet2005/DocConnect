@@ -286,6 +286,8 @@ namespace DocConnect.Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PhienTuVanId");
+
                     b.ToTable("TinNhan", (string)null);
                 });
 
@@ -322,18 +324,29 @@ namespace DocConnect.Web.Migrations
                     b.HasOne("DocConnect.Web.Models.Entities.NguoiDung", "BacSi")
                         .WithMany()
                         .HasForeignKey("BacSiId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DocConnect.Web.Models.Entities.NguoiDung", "BenhNhan")
                         .WithMany()
                         .HasForeignKey("BenhNhanId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("BacSi");
 
                     b.Navigation("BenhNhan");
+                });
+
+            modelBuilder.Entity("DocConnect.Web.Models.Entities.TinNhan", b =>
+                {
+                    b.HasOne("DocConnect.Web.Models.Entities.PhienTuVan", "PhienTuVan")
+                        .WithMany()
+                        .HasForeignKey("PhienTuVanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PhienTuVan");
                 });
 
             modelBuilder.Entity("DocConnect.Web.Models.Entities.ChuyenKhoa", b =>
