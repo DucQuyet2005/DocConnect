@@ -1,0 +1,320 @@
+@model DocConnect.Web.Models.Entities.PhienTuVan
+
+@{
+    ViewData["Title"] = "Phòng Tư Vấn Trực Tuyến";
+    var lichSuTinNhan = ViewBag.LichSuTinNhan as List<DocConnect.Web.Models.Entities.TinNhan> ?? new List<DocConnect.Web.Models.Entities.TinNhan>();
+    var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+<style>
+    .chat-container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        height: 70vh;
+    }
+    .chat-header {
+        background: #004E9F;
+        color: white;
+        padding: 15px 20px;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        font-weight: bold;
+    }
+    .chat-body {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .msg-wrapper {
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+    }
+    .msg-wrapper.me {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+    .msg-wrapper.other {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+    .msg-bubble {
+        padding: 10px 16px;
+        border-radius: 18px;
+        font-size: 15px;
+        word-break: break-word;
+    }
+    .msg-image {
+        max-width: 280px;
+        border-radius: 14px;
+        display: block;
+    }
+    .me .msg-bubble {
+        background: #004E9F;
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+    .other .msg-bubble {
+        background: #e9ecef;
+        color: #333;
+        border-bottom-left-radius: 2px;
+    }
+    .msg-meta {
+        font-size: 11px;
+        color: #888;
+        margin-top: 3px;
+        padding: 0 5px;
+    }
+    .chat-footer {
+        padding: 15px 20px;
+        background: #fff;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        border-top: 1px solid #eee;
+    }
+</style>
+
+<div class="container">
+    <div class="chat-container">
+        <div class="chat-header d-flex justify-content-between align-items-center">
+            <span>Phiên tư vấn số: #@Model.Id - Trạng thái: @(Model.TrangThai == "Closed" ? "Đã kết thúc" : Model.TrangThai)</span>
+            <div>
+                @if (User.IsInRole("Doctor") && Model.TrangThai != "Closed")
+                {
+                    <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#endSessionModal">
+                        <i class="fa-solid fa-flag-checkered"></i> Kết thúc ca khám
+                    </button>
+                }
+                <a href="/BacSi" class="btn btn-sm btn-outline-light text-decoration-none">Thoát phòng</a>
+            </div>
+        </div>
+
+        <!-- Modal Nhập Hồ Sơ Bệnh Án -->
+        <div class="modal fade" id="endSessionModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title fw-bold">KẾT THÚC PHIÊN & LẬP BỆNH ÁN</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-dark text-start">
+                        <form id="formHoSo">
+                            <input type="hidden" id="PhienTuVanId" value="@Model.Id" />
+                            <input type="hidden" id="BenhNhanId" value="@Model.BenhNhanId" />
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Triệu chứng lâm sàng</label>
+                                <textarea class="form-control" id="TrieuChung" rows="2" placeholder="Sốt, ho, khó thở..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-primary">Kết luận / Chẩn đoán</label>
+                                <textarea class="form-control" id="KetLuan" rows="3" placeholder="Ghi rõ chẩn đoán bệnh..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-success">Đơn thuốc & Lời dặn</label>
+                                <textarea class="form-control" id="DonThuoc" rows="3" placeholder="Thuốc A x 2 viên/ngày..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="button" class="btn btn-primary fw-bold" id="btnSubmitHoSo">
+                            <i class="fa-solid fa-save"></i> Lưu bệnh án & Kết thúc
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-subheader p-2 bg-light border-bottom text-center">
+            <strong>Đang tư vấn với: @ViewBag.TenDoiPhuong</strong>
+        </div>
+        
+        <div class="chat-body" id="chatBody">
+            @foreach (var msg in lichSuTinNhan)
+            {
+                var isMe = msg.NguoiGuiId == currentUserId;
+                <div class="msg-wrapper @(isMe ? "me" : "other")">
+                    <div class="msg-bubble">
+                        @if (msg.LoaiTinNhan == "Image")
+                        {
+                            <img src="@msg.NoiDung" alt="Tin nhắn hình ảnh" class="msg-image" />
+                        }
+                        else
+                        {
+                            @msg.NoiDung
+                        }
+                    </div>
+                    <div class="msg-meta">
+                        @msg.ThoiGianGui.ToString("HH:mm")
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (Model.TrangThai == "Closed")
+        {
+            <div class="chat-footer bg-light text-center py-3">
+                <span class="text-muted"><i class="fa-solid fa-lock me-1"></i> Phiên tư vấn này đã kết thúc. Bạn có thể xem lại lịch sử đoạn chat.</span>
+            </div>
+        }
+        else
+        {
+            <div class="chat-footer">
+                <div class="input-group">
+                    <input type="text" id="txtNoiDung" class="form-control" placeholder="Nhập nội dung tin nhắn..." aria-label="Nội dung">
+                    <button class="btn btn-primary px-4" type="button" id="btnGui">
+                        Gửi <i class="fa-solid fa-paper-plane ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+    @section Scripts {
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+        <script>
+            const connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+            const currentUserId = "@(ViewBag.CurrentUserId as string ?? string.Empty)";
+            const currentPhienId = @Model.Id;
+            window.__docconnectCurrentChatPhienId = currentPhienId;
+
+            function taoHtmlTinNhan(noiDung, isMe, thoiGian) {
+                return `
+                    <div class="msg-wrapper ${isMe ? "me" : "other"}">
+                        <div class="msg-bubble">
+                            ${noiDung}
+                        </div>
+                        <div class="msg-meta">
+                            ${thoiGian ?? ""}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function cuonKhungChatXuongDay() {
+                var chatBody = document.getElementById("chatBody");
+                if (chatBody) {
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }
+            }
+
+    connection.on("ReceiveMessage", (senderId, tenNguoiGui, message) => {
+        const isMe = (senderId === currentUserId);
+        
+        let html = `
+            <div class="msg-wrapper ${isMe ? 'me' : 'other'}">
+                <div class="msg-bubble">
+                    ${message}
+                </div>
+                <div class="msg-meta">
+                    ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+            </div>
+        `; 
+        
+        $('#chatBody').append(html);
+        cuonKhungChatXuongDay();
+    });
+
+        connection.start().then(() => {
+            connection.invoke("JoinRoom", currentPhienId);
+        });
+
+        function thucHienGuiTinNhan() {
+            var noiDungText = $('#txtNoiDung').val().trim();
+
+            if (noiDungText === '') {
+                return;
+            }
+
+            connection.invoke("SendMessage", currentPhienId, currentUserId, noiDungText)
+                .then(function () {
+                    $('#txtNoiDung').val('');
+                })
+                .catch(function () {
+                    alert("Không thể gửi tin nhắn. Vui lòng thử lại.");
+                });
+        }
+
+        $(document).ready(function () {
+            // Tự động cuộn khung chat xuống đáy khi vừa load xong trang
+            cuonKhungChatXuongDay();
+
+            // Hành động 1: Click nút Gửi
+            $('#btnGui').click(function () {
+                thucHienGuiTinNhan();
+            });
+
+            // Hành động 2: Nhấn nút Enter trên bàn phím trong ô nhập liệu
+            $('#txtNoiDung').keypress(function (e) {
+                if (e.which == 13) { // Phím Enter mã là 13
+                    thucHienGuiTinNhan();
+                }
+            });
+
+            // Hành động 3: Bác sĩ nộp bệnh án
+            $('#btnSubmitHoSo').click(function () {
+                var data = {
+                    PhienTuVanId: parseInt($('#PhienTuVanId').val()),
+                    BenhNhanId: $('#BenhNhanId').val(),
+                    TrieuChung: $('#TrieuChung').val(),
+                    KetLuan: $('#KetLuan').val() + '\n--- Đơn thuốc/Lời dặn: ---\n' + $('#DonThuoc').val()
+                };
+
+                if ($('#KetLuan').val().trim() === "") {
+                    alert("Vui lòng nhập kết luận chẩn đoán!");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/HoSo/KetThucCaKham',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        alert("Đã lưu hồ sơ thành công!");
+                        window.location.href = '/BacSi'; // Điều hướng bác sĩ về trang chủ
+                    },
+                    error: function (err) {
+                        alert("Lỗi khi lưu bệnh án: " + err.responseText);
+                    }
+                });
+            });
+
+        });
+    </script>
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Lấy ID phiên hiện tại từ Model
+            const currentPhienId = @Model.Id; 
+            
+            // Lấy danh sách tin nhắn chờ từ localStorage
+            let tinNhanCho = JSON.parse(localStorage.getItem('tinNhanCho') || '[]');
+            
+            // Lọc bỏ tin nhắn thuộc phiên hiện tại (đánh dấu là đã xem)
+            let updatedList = tinNhanCho.filter(item => item.phienId != currentPhienId);
+            
+            // Cập nhật lại localStorage
+            localStorage.setItem('tinNhanCho', JSON.stringify(updatedList));
+            
+            // Cập nhật lại giao diện badge (số lượng trên icon chat) nếu đang ở trang này
+            const badge = document.getElementById('badgeCount');
+            if (badge) {
+                badge.style.display = updatedList.length > 0 ? 'inline-block' : 'none';
+                badge.innerText = updatedList.length;
+            }
+        });
+    </script>
+}

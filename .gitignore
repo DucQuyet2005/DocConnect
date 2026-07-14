@@ -70,3 +70,5 @@ yarn-error.log*
 ## Agent Skills
 # Installed skill directories (can be restored using 'npx skills experimental_install' from skills-lock.json)
 .agents/
+
+docs/guides/

@@ -1,0 +1,296 @@
+@model DocConnect.Web.Models.ViewModels.BacSiViewModel
+
+@{
+    ViewData["Title"] = "Hồ sơ bác sĩ - " + Model.HoTen;
+}
+
+<style>
+    :root {
+        --brand-color: #004E9F;
+        --brand-light: #eef5ff;
+        --brand-hover: #003a77;
+    }
+
+    /* Các class màu sắc đồng bộ hệ thống */
+    .btn-main {
+        background-color: var(--brand-color);
+        color: white;
+    }
+    .btn-main:hover {
+        background-color: var(--brand-hover);
+        color: white;
+    }
+    .text-main {
+        color: var(--brand-color);
+    }
+    .bg-main {
+        background-color: var(--brand-color);
+        color: white;
+    }
+
+    /* Khối header hồ sơ bác sĩ */
+    .bg-docconnect-header {
+        background-color: var(--brand-light);
+        border: 1px solid #b3d1ff;
+    }
+    
+    .btn-schedule {
+        border: 1px solid #cbdcf7;
+        background: #fff;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: 0.2s;
+        color: #4a5568;
+    }
+    .btn-schedule:hover, .btn-schedule.active {
+        border-color: var(--brand-color);
+        background-color: #fff;
+        color: var(--brand-color);
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 78, 159, 0.1);
+    }
+    
+    /* FIX: Đảm bảo avatar profile luôn là hình tròn hoàn hảo không bị bóp méo */
+    .doctor-avatar-profile {
+        width: 140px;
+        height: 140px;
+        min-width: 140px;
+        min-height: 140px;
+        object-fit: cover;
+        border-radius: 50% !important;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 15px rgba(0, 78, 159, 0.1);
+    }
+
+    /* FIX: Đảm bảo mini avatar trong phần chat/hỏi đáp luôn tròn */
+    .doctor-avatar-mini {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+        object-fit: cover;
+        border-radius: 50% !important;
+    }
+    
+    .section-profile-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #2c3e50;
+        border-left: 4px solid var(--brand-color);
+        padding-left: 10px;
+        margin-bottom: 20px;
+        margin-top: 35px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 20px;
+        border-left: 2px solid #e2eeff;
+        padding-bottom: 15px;
+    }
+    .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: -6px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        background-color: var(--brand-color);
+        border-radius: 50%;
+    }
+</style>
+
+<div class="container my-5 pt-4">
+    <div class="card border-0 rounded-4 p-4 bg-docconnect-header mb-4 shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center text-md-start mb-3 mb-md-0">
+                <img src="@(string.IsNullOrEmpty(Model.AnhDaiDien) ? "/images/default-avatar.png" : Model.AnhDaiDien)" class="doctor-avatar-profile" alt="BS. @Model.HoTen" onerror="this.onerror=null; this.src='/images/default-avatar.png';">
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                    <h3 class="fw-bold m-0 text-dark">BS. @Model.HoTen</h3>
+                    <span class="badge bg-main px-3 py-1.5 rounded-pill small">Chuyên khoa @Model.TenChuyenKhoa</span>
+                </div>
+                
+                <h5 class="text-main fw-bold mb-3" style="font-size: 1.2rem;">150.000đ / Lượt khám</h5>
+                
+                <div class="d-flex gap-4 text-muted small">
+                    <div><i class="fa-solid fa-video me-1 text-main"></i> Lượt gọi khám: <strong>10</strong></div>
+                    <div><i class="fa-solid fa-comments me-1 text-main"></i> Lượt tư vấn: <strong>318</strong></div>
+                    <div><i class="fa-solid fa-star me-1 text-warning"></i> Đánh giá: <strong>5 / 5</strong></div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <button class="btn btn-outline-primary px-4 py-2 rounded-pill shadow-sm bg-white"><i class="fa-solid fa-share-nodes me-1"></i> Chia sẻ hồ sơ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="alert border-0 d-flex align-items-center mb-4 shadow-sm" style="background-color: #fff; border-left: 4px solid var(--brand-color) !important;" role="alert">
+                <i class="fa-solid fa-location-dot fs-4 me-3 text-main"></i>
+                <div>
+                    <strong class="d-block text-dark">Bác Sĩ Ơi - Phòng Khám O2O</strong>
+                    <span class="small text-muted">Phòng B19 - Tổ hợp Y tế Chất lượng cao MediPlus, 99 Tân Mai, Hoàng Mai, Hà Nội</span>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background-color: #fff; border: 1px solid #eef5ff !important;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-calendar-days text-main me-2"></i> Lịch tư vấn trực tuyến</h6>
+                    <div class="position-relative">
+                    <input type="date" 
+                    class="form-control form-control-sm fw-bold text-secondary border-light shadow-none px-3" 
+                    id="chonNgayKham" 
+                    style="border-radius: 50rem; min-width: 160px; height: 38px; border: 1px solid #cbdcf7 !important;"
+                    value="@DateTime.Now.ToString("yyyy-MM-dd")" 
+                    min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <button class="btn-schedule">20:30</button>
+                    <button class="btn-schedule">20:45</button>
+                    <button class="btn-schedule active">21:00</button>
+                    <button class="btn-schedule">21:15</button>
+                    <button class="btn-schedule">21:30</button>
+                    <button class="btn-schedule">21:45</button>
+                </div>
+            </div>
+
+            <h5 class="section-profile-title">Kinh nghiệm khám chữa bệnh</h5>
+            <div class="bg-white p-3 rounded-3 text-secondary lh-lg shadow-sm border border-light">
+                @if (!string.IsNullOrEmpty(Model.KinhNghiem))
+                {
+                    @Model.KinhNghiem
+                }
+                else
+                {
+                    <span class="text-muted italic">Chưa có thông tin kinh nghiệm khám chữa bệnh.</span>
+                }
+            </div>
+
+            <h5 class="section-profile-title">Quá trình công tác</h5>
+            <div class="bg-white p-4 rounded-3 shadow-sm border border-light">
+                <div class="timeline-item">
+                    <strong class="text-dark">(1986 - 2003)</strong> Bác sĩ điều trị tại Viện Châm cứu TW
+                </div>
+                <div class="timeline-item">
+                    <strong class="text-dark">(1990 - 1992)</strong> Chuyên gia, Bác sĩ điều trị tại Liên Xô
+                </div>
+                <div class="timeline-item">
+                    <strong class="text-dark">(2003 - 2014)</strong> Bác sĩ, Chuyên viên chính tại Vụ Tổ chức Cán bộ - Bộ Y tế
+                </div>
+                <div class="timeline-item mb-0">
+                    <strong class="text-dark">(2014 - Hiện nay)</strong> Bác sĩ khám, điều trị, tư vấn tại Bệnh viện, Phòng khám, Trung tâm
+                </div>
+            </div>
+
+            @{
+                var danhSachCauHoi = ViewBag.CauHoiCongDong as List<dynamic>; // Hoặc kiểu dữ liệu cụ thể của bạn
+            }
+
+            <h5 class="section-profile-title">
+                Đóng góp từ cộng đồng @(danhSachCauHoi != null && danhSachCauHoi.Any() ? $"({danhSachCauHoi.Count} câu hỏi)" : "")
+            </h5>
+
+            @if (danhSachCauHoi != null && danhSachCauHoi.Any())
+            {
+                foreach (var cauHoi in danhSachCauHoi)
+                {
+                    <div class="card border-0 shadow-sm p-3 mb-3 border border-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark small"><i class="fa-solid fa-user text-muted me-1"></i> @cauHoi.NguoiGoiTính, @cauHoi.Tuoi tuổi</span>
+                            <span class="badge bg-light text-main border border-light">@Model.TenChuyenKhoa</span>
+                        </div>
+                        <p class="text-muted small my-2">@cauHoi.NoiDungTomTat</p>
+                        <div class="p-2 rounded d-flex align-items-center gap-2" style="font-size: 0.85rem; background-color: var(--brand-light);">
+                            <img src="@(string.IsNullOrEmpty(Model.AnhDaiDien) ? "/images/default-avatar.png" : Model.AnhDaiDien)" class="doctor-avatar-mini" onerror="this.onerror=null; this.src='/images/default-avatar.png';">
+                            <span class="text-muted">Được trả lời bởi <strong class="text-main">BS. @Model.HoTen</strong></span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="bg-white p-4 text-center rounded-3 shadow-sm border border-light text-muted">
+                    <i class="fa-solid fa-comments-toggle fs-3 mb-2 d-block text-secondary"></i>
+                    <span>Chưa có thông tin đóng góp từ cộng đồng.</span>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 rounded-4 sticky-top border border-light" style="top: 100px; z-index: 20;">
+                <h6 class="fw-bold mb-3 text-dark text-center text-uppercase tracking-wide">Tư vấn trực tuyến</h6>
+                <p class="small text-muted text-center mb-4">Kết nối video call trực tiếp 1-1 với bác sĩ ngay trên ứng dụng di động DocConnect.</p>
+                <form id="formTuVan" asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="m-0">
+                    <input type="hidden" name="bacSiId" value="@Model.Id" />
+                    <button type="button" class="btn btn-main w-100 py-2.5 rounded-pill fw-bold shadow-sm text-decoration-none text-center d-block" data-bs-toggle="modal" data-bs-target="#trieuChungTamThoiModal">
+                        <i class="fa-solid fa-comment-medical me-2"></i> Nhắn tin tư vấn ngay
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nhập Triệu Chứng Ban Đầu -->
+<div class="modal fade" id="trieuChungTamThoiModal" tabindex="-1" aria-labelledby="trieuChungTamThoiModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="trieuChungTamThoiModalLabel">Nhập triệu chứng ban đầu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Hãy mô tả ngắn gọn tình trạng sức khỏe của bạn để bác sĩ nắm được thông tin trước khi bắt đầu cuộc tư vấn.</p>
+                <div class="mb-3">
+                    <label for="txtTrieuChungTamThoi" class="form-label fw-bold">Mô tả triệu chứng (Tùy chọn)</label>
+                    <textarea class="form-control" id="txtTrieuChungTamThoi" rows="4" placeholder="Ví dụ: Tôi bị đau đầu từ hôm qua, sốt nhẹ khoảng 38 độ..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnBoQuaTrieuChung">Bỏ qua & Tư vấn</button>
+                <button type="button" class="btn btn-primary" id="btnXacNhanTrieuChung">Bắt đầu tư vấn</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Khi nhấn nút "Bỏ qua & Tư vấn"
+            $('#btnBoQuaTrieuChung').click(function () {
+                $('#formTuVan').submit();
+            });
+
+            // Khi nhấn nút "Bắt đầu tư vấn" (Có nhập triệu chứng)
+            $('#btnXacNhanTrieuChung').click(function () {
+                var trieuChung = $('#txtTrieuChungTamThoi').val().trim();
+                if (trieuChung !== "") {
+                    // Gửi AJAX lưu triệu chứng vào Session trước
+                    $.ajax({
+                        url: '/TinNhan/LuuTrieuChungTamThoi',
+                        type: 'POST',
+                        data: { trieuChung: trieuChung },
+                        success: function (res) {
+                            // Sau khi lưu thành công, submit form khởi tạo phiên khám
+                            $('#formTuVan').submit();
+                        },
+                        error: function () {
+                            // Nếu lỗi AJAX, vẫn cho qua để không chặn trải nghiệm người dùng
+                            $('#formTuVan').submit();
+                        }
+                    });
+                } else {
+                    $('#formTuVan').submit();
+                }
+            });
+        });
+    </script>
+}

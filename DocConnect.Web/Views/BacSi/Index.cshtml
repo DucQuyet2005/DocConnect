@@ -1,0 +1,170 @@
+@model IEnumerable<DocConnect.Web.Models.ViewModels.BacSiViewModel>
+
+@{
+    ViewData["Title"] = "Tư vấn cùng Bác sĩ - DocConnect";
+}
+
+<style>
+    :root { 
+        --brand-color: #004E9F; 
+        --brand-light: #eef5ff;
+        --brand-hover: #003a77;
+    }
+    .text-brand { color: var(--brand-color) !important; }
+    .bg-brand { background-color: var(--brand-color) !important; }
+    
+    .hero-section-dr { background-color: var(--brand-light); padding: 45px 0; border-bottom: 1px solid #d0e2ff; }
+    
+    /* Hộp tìm kiếm */
+    .search-dr-box { max-width: 700px; margin: 0 auto; position: relative; }
+    .search-dr-box input { border-radius: 50px; padding: 14px 25px; border: 2px solid #b3d1ff; width: 100%; outline: none; box-shadow: 0 4px 10px rgba(0,78,159,0.03); }
+    .search-dr-box i { position: absolute; right: 25px; top: 18px; color: var(--brand-color); font-size: 18px; }
+
+    /* Thanh lọc Chuyên khoa & Ngày */
+    .filter-bar { background: white; padding: 15px 0; box-shadow: 0 4px 15px rgba(0, 78, 159, 0.06); border-bottom: 1px solid #eef2f7; }
+    .filter-item { border-radius: 20px; border: 1px solid #cbdcf7; padding: 8px 20px; font-size: 14px; background: white; color: #334155; font-weight: 500; outline: none; }
+    .filter-item:focus { border-color: var(--brand-color); }
+
+    /* Thẻ Card Bác sĩ */
+    .dr-card { 
+        border: 1px solid #eef2f7; 
+        border-radius: 16px; 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        padding: 25px 20px; 
+        text-align: center; 
+        background: white; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.01); 
+        height: 100%; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between;
+        
+        position: relative; /* FIX LỖI 1: Khóa chặt màng bọc stretched-link không cho tràn sang card khác */
+    }
+    .dr-card:hover { transform: translateY(-6px); box-shadow: 0 12px 25px rgba(0, 78, 159, 0.12); border-color: #cbdcf7; }
+    
+    .dr-avatar-wrap { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; }
+    
+    /* Tối ưu class ảnh đại diện, tránh bóp méo khi lỗi đường dẫn */
+    .dr-avatar { 
+        width: 110px; 
+        height: 110px; 
+        border-radius: 50% !important; 
+        object-fit: cover; 
+        border: 3px solid var(--brand-light); 
+        display: block;
+    }
+    .online-indicator { position: absolute; bottom: 4px; right: 8px; width: 14px; height: 14px; background-color: #22c55e; border: 2px solid white; border-radius: 50%; z-index: 2; }
+
+    .dr-name { font-weight: 700; font-size: 18px; color: #1e293b; margin-bottom: 5px; }
+    .dr-specialty { color: var(--brand-color); font-size: 13px; font-weight: 600; background: var(--brand-light); display: inline-block; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }
+    .dr-exp { font-size: 13px; color: #64748b; font-weight: 500; margin-bottom: 15px; }
+
+    /* Nút nhắn tin tư vấn trực tiếp */
+    .btn-chat-dr { 
+        background-color: var(--brand-color); 
+        color: white; 
+        border-radius: 10px; 
+        width: 100%; 
+        padding: 11px; 
+        font-weight: 600; 
+        text-decoration: none; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        gap: 8px; 
+        transition: background 0.2s; 
+        border: none;
+        
+        position: relative;
+        z-index: 5; /* Đẩy lớp nút chat lên trên cùng để có thể click được riêng biệt */
+    }
+    .btn-chat-dr:hover { background-color: var(--brand-hover); color: white; }
+</style>
+
+<section class="hero-section-dr">
+    <div class="container text-center">
+        <h2 class="fw-bold text-brand mb-2">Tư vấn trực tuyến cùng Bác sĩ</h2>
+        <p class="text-muted mb-4">Hỏi đáp trực tiếp, nhận hướng dẫn chăm sóc sức khỏe chuẩn y khoa qua Box chat</p>
+        <form method="get" asp-controller="BacSi" asp-action="Index" class="search-dr-box mt-3">
+        <input type="text"
+           name="keyword"
+           value="@ViewBag.Keyword"
+           placeholder="Tìm bác sĩ hoặc chuyên khoa..." />
+
+            <button type="submit"
+            style="position:absolute;right:18px;top:12px;border:none;background:none;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+    </div>
+</section>
+
+    <form method="get" asp-controller="BacSi" asp-action="Index" class="d-flex flex-wrap gap-3 justify-content-center align-items-center">
+        <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
+
+        <select name="chuyenKhoaId" class="filter-item" onchange="this.form.submit()">
+            <option value="">-- Tất cả chuyên khoa --</option>
+            @if (ViewBag.ChuyenKhoas != null)
+            {
+                foreach (var ck in ViewBag.ChuyenKhoas)
+                {
+                    <!option value="@ck.Id" @(ViewBag.SelectedChuyenKhoa == ck.Id ? "selected" : "")>@ck.TenChuyenKhoa</!option>
+                }
+            }
+        </select>
+
+        <input type="date" name="ngayKham" value="@ViewBag.SelectedNgayKham" class="filter-item" onchange="this.form.submit()" />
+
+        <a href="/BacSi" class="btn btn-link btn-sm text-secondary text-decoration-none"><i class="fa-solid fa-arrow-rotate-left me-1"></i>Xóa lọc</a>
+    </form>
+
+<section class="py-5 bg-light-subtle">
+    <div class="container">
+        <div class="row g-4">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var dr in Model)
+                {
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="dr-card">
+                            <div>
+                                <div class="dr-avatar-wrap">
+                                    <img src="@(string.IsNullOrEmpty(dr.AnhDaiDien) ? "/images/default-avatar.png" : dr.AnhDaiDien)" 
+                                         class="dr-avatar" 
+                                         onerror="this.onerror=null; this.src='/images/default-avatar.png';" 
+                                         alt="BS. @dr.HoTen" />
+                                    <div class="online-indicator"></div>
+                                </div>
+                                
+                                <div class="dr-name">
+                                    @(dr.HoTen.StartsWith("BS.") ? dr.HoTen : $"BS. {dr.HoTen}")
+                                </div>
+                                <div class="dr-specialty">@dr.TenChuyenKhoa</div>
+                                <div class="dr-exp"><i class="fa-solid fa-briefcase text-secondary me-1"></i> @dr.KinhNghiem</div>
+                                
+                                <a href="/BacSi/ChiTiet/@dr.Id" class="stretched-link"></a>
+                            </div>
+                            
+                            <div>
+                                    <form asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="d-inline m-0">
+                                        <input type="hidden" name="bacSiId" value="@dr.Id" />
+                                    <button type="submit" class="btn-chat-dr shadow-sm">
+                                        <i class="fa-solid fa-comment-dots"></i>
+                                        <span>Nhắn tin tư vấn</span>
+                                        </button>
+                                    </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted fs-5"><i class="fa-solid fa-user-slash me-2"></i>Không tìm thấy bác sĩ nào phù hợp với bộ lọc hiện tại.</div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
