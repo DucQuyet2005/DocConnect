@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using DocConnect.Web.Models.Entities;
 
-namespace DocConnect.Web.Repositories
+namespace DocConnect.Web.Repositories.Interfaces
 {
     public interface IAccountRepository
     {

@@ -4,8 +4,9 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using DocConnect.Web.Data;
 using DocConnect.Web.Models.Entities;
+using DocConnect.Web.Repositories.Interfaces;
 
-namespace DocConnect.Web.Repositories
+namespace DocConnect.Web.Repositories.Implementations
 {
     public class HoiDapRepository : IHoiDapRepository
     {

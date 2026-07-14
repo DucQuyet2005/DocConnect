@@ -10,10 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DocConnectDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<DocConnect.Web.Repositories.IAccountRepository, DocConnect.Web.Repositories.AccountRepository>();
-builder.Services.AddScoped<DocConnect.Web.Repositories.IBacSiRepository, DocConnect.Web.Repositories.BacSiRepository>();
-builder.Services.AddScoped<DocConnect.Web.Repositories.IHoiDapRepository, DocConnect.Web.Repositories.HoiDapRepository>();
-builder.Services.AddScoped<DocConnect.Web.Repositories.ITinNhanRepository, DocConnect.Web.Repositories.TinNhanRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.Interfaces.IAccountRepository, DocConnect.Web.Repositories.Implementations.AccountRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.Interfaces.IBacSiRepository, DocConnect.Web.Repositories.Implementations.BacSiRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.Interfaces.IHoiDapRepository, DocConnect.Web.Repositories.Implementations.HoiDapRepository>();
+builder.Services.AddScoped<DocConnect.Web.Repositories.Interfaces.ITinNhanRepository, DocConnect.Web.Repositories.Implementations.TinNhanRepository>();
 
 // 2. Cấu hình xác thực bằng Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -16,11 +16,11 @@ namespace DocConnect.Web.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly DocConnect.Web.Repositories.IAccountRepository _accountRepository;
+        private readonly DocConnect.Web.Repositories.Interfaces.IAccountRepository _accountRepository;
         private readonly DocConnectDbContext _context;
         private readonly PasswordHasher<NguoiDung> _passwordHasher;
 
-        public AccountController(DocConnect.Web.Repositories.IAccountRepository accountRepository, DocConnectDbContext context)
+        public AccountController(DocConnect.Web.Repositories.Interfaces.IAccountRepository accountRepository, DocConnectDbContext context)
         {
             _accountRepository = accountRepository;
             _context = context;

@@ -6,15 +6,16 @@ using DocConnect.Web.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DocConnect.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly DocConnect.Web.Repositories.IBacSiRepository _bacSiRepository;
+        private readonly DocConnect.Web.Repositories.Interfaces.IBacSiRepository _bacSiRepository;
 
         // Tiêm Repository vào thông qua Constructor
-        public HomeController(DocConnect.Web.Repositories.IBacSiRepository bacSiRepository)
+        public HomeController(ILogger<HomeController> logger, DocConnect.Web.Repositories.Interfaces.IBacSiRepository bacSiRepository)
         {
             _bacSiRepository = bacSiRepository;
         }

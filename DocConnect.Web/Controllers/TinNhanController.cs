@@ -15,9 +15,9 @@ namespace DocConnect.Web.Controllers
     public class TinNhanController : Controller
     {
         
-        private readonly DocConnect.Web.Repositories.ITinNhanRepository _tinNhanRepository;
+        private readonly DocConnect.Web.Repositories.Interfaces.ITinNhanRepository _tinNhanRepository;
 
-        public TinNhanController(DocConnect.Web.Repositories.ITinNhanRepository tinNhanRepository)
+        public TinNhanController(DocConnect.Web.Repositories.Interfaces.ITinNhanRepository tinNhanRepository)
         {
             _tinNhanRepository = tinNhanRepository;
         }

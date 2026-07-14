@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using DocConnect.Web.Models.Entities;
 using DocConnect.Web.Models.ViewModels;
 
-namespace DocConnect.Web.Repositories
+namespace DocConnect.Web.Repositories.Interfaces
 {
     public interface IBacSiRepository
     {
