@@ -9,21 +9,19 @@
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
             @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    @if(Model == null || Model.Count == 0)
+    <div id="noHoSoAlert" class="alert alert-info shadow-sm" style="display: @(Model == null || Model.Count == 0 ? "block" : "none");">
+        <i class="fa-solid fa-info-circle me-2"></i> Bạn chưa lập hồ sơ bệnh án nào. Hồ sơ bệnh án được tạo tự động khi bạn kết thúc một phiên khám bệnh.
+    </div>
+
+    @if(Model != null && Model.Count > 0)
     {
-        <div class="alert alert-info shadow-sm">
-            <i class="fa-solid fa-info-circle me-2"></i> Bạn chưa lập hồ sơ bệnh án nào. Hồ sơ bệnh án được tạo tự động khi bạn kết thúc một phiên khám bệnh.
-        </div>
-    }
-    else
-    {
-        <div class="card shadow-sm border-0">
+        <div class="card shadow-sm border-0" id="hoSoTableContainer">
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -39,16 +37,16 @@
                         <tbody>
                             @foreach (var hoso in Model)
                             {
-                                <tr>
+                                <tr id="row-@hoso.Id">
                                     <td><span class="badge bg-secondary">#@hoso.PhienTuVanId</span></td>
                                     <td>@hoso.ThoiGian.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td>
-                                        <div class="text-truncate" style="max-width: 200px;" title="@hoso.TrieuChung">
+                                        <div class="text-truncate trieu-chung-text" style="max-width: 200px;" title="@hoso.TrieuChung" id="trieuChung-@hoso.Id">
                                             @(string.IsNullOrEmpty(hoso.TrieuChung) ? "Không có" : hoso.TrieuChung)
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="text-truncate" style="max-width: 300px;" title="@hoso.KetLuan">
+                                        <div class="text-truncate ket-luan-text" style="max-width: 300px;" title="@hoso.KetLuan" id="ketLuan-@hoso.Id">
                                             @hoso.KetLuan
                                         </div>
                                     </td>
@@ -57,14 +55,12 @@
                                             <a href="/TinNhan/CuocTroChuyen/@hoso.PhienTuVanId" class="btn btn-sm btn-outline-info" title="Xem lại đoạn chat">
                                                 <i class="fa-solid fa-comments"></i>
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@hoso.Id" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editHoSo(@hoso.Id)" title="Chỉnh sửa">
                                                 <i class="fa-solid fa-pen"></i>
-                                            </a>
-                                            <form asp-action="Delete" asp-route-id="@hoso.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ bệnh án này?');">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteHoSo(@hoso.Id)" title="Xóa">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -76,3 +72,187 @@
         </div>
     }
 </div>
+
+<!-- Modal Sửa Bệnh Án -->
+<div class="modal fade" id="editHoSoModal" tabindex="-1" aria-labelledby="editHoSoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: #004E9F;">
+                <h5 class="modal-title fw-bold" id="editHoSoModalLabel"><i class="fa-solid fa-pen-to-square me-2"></i>Chỉnh sửa hồ sơ bệnh án</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editHoSoForm" onsubmit="saveHoSo(event)">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editHoSoId" name="Id" />
+                <input type="hidden" id="editPhienTuVanId" name="PhienTuVanId" />
+                <input type="hidden" id="editNguoiDungId" name="NguoiDungId" />
+                <input type="hidden" id="editThoiGian" name="ThoiGian" />
+                <input type="hidden" id="editTenBacSi" name="TenBacSi" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editTrieuChung" class="form-label fw-semibold text-secondary">Triệu chứng</label>
+                        <textarea class="form-control" id="editTrieuChung" name="TrieuChung" rows="3" placeholder="Nhập triệu chứng..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editKetLuan" class="form-label fw-semibold text-secondary">Chẩn đoán, Đơn thuốc & Lời dặn <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editKetLuan" name="KetLuan" rows="4" required placeholder="Nhập chẩn đoán, đơn thuốc & lời dặn..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #004E9F; border-color: #004E9F;">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editHoSo(id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/HoSo/Edit/" + id, true);
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        
+                        if (response.success) {
+                            document.getElementById('editHoSoId').value = response.id;
+                            document.getElementById('editPhienTuVanId').value = response.phienTuVanId || 0;
+                            document.getElementById('editNguoiDungId').value = response.nguoiDungId || '';
+                            document.getElementById('editThoiGian').value = response.thoiGian || '';
+                            document.getElementById('editTenBacSi').value = response.tenBacSi || '';
+                            document.getElementById('editTrieuChung').value = response.trieuChung || '';
+                            document.getElementById('editKetLuan').value = response.ketLuan || '';
+                            
+                            // Show bootstrap modal
+                            var editModal = new bootstrap.Modal(document.getElementById('editHoSoModal'));
+                            editModal.show();
+                        } else {
+                            alert(response.message);
+                        }
+                    } else {
+                        alert("Không thể tải thông tin bệnh án.");
+                    }
+                }
+            };
+            
+            xhr.send();
+        }
+
+        function saveHoSo(event) {
+            event.preventDefault();
+            var id = document.getElementById('editHoSoId').value;
+            var phienTuVanId = document.getElementById('editPhienTuVanId').value;
+            var nguoiDungId = document.getElementById('editNguoiDungId').value;
+            var thoiGian = document.getElementById('editThoiGian').value;
+            var tenBacSi = document.getElementById('editTenBacSi').value;
+            var trieuChung = document.getElementById('editTrieuChung').value;
+            var ketLuan = document.getElementById('editKetLuan').value;
+            
+            var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/HoSo/Edit/" + id, true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        
+                        if (response.success) {
+                            // Hide modal
+                            var modalEl = document.getElementById('editHoSoModal');
+                            var modalInstance = bootstrap.Modal.getInstance(modalEl);
+                            if (modalInstance) {
+                                modalInstance.hide();
+                            }
+                            
+                            // Update UI text cells
+                            var trieuChungDiv = document.getElementById("trieuChung-" + id);
+                            var ketLuanDiv = document.getElementById("ketLuan-" + id);
+                            
+                            if (trieuChungDiv) {
+                                trieuChungDiv.innerText = response.data.trieuChung || 'Không có';
+                                trieuChungDiv.setAttribute('title', response.data.trieuChung || '');
+                            }
+                            if (ketLuanDiv) {
+                                ketLuanDiv.innerText = response.data.ketLuan || '';
+                                ketLuanDiv.setAttribute('title', response.data.ketLuan || '');
+                            }
+                            
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    } else {
+                        alert("Đã xảy ra lỗi khi lưu thông tin.");
+                    }
+                }
+            };
+            
+            var params = "Id=" + id +
+                         "&PhienTuVanId=" + phienTuVanId +
+                         "&NguoiDungId=" + nguoiDungId +
+                         "&ThoiGian=" + encodeURIComponent(thoiGian) +
+                         "&TenBacSi=" + encodeURIComponent(tenBacSi) +
+                         "&TrieuChung=" + encodeURIComponent(trieuChung) +
+                         "&KetLuan=" + encodeURIComponent(ketLuan) +
+                         "&__RequestVerificationToken=" + encodeURIComponent(token);
+            
+            xhr.send(params);
+        }
+
+        function deleteHoSo(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa hồ sơ bệnh án này?")) {
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/HoSo/Delete/" + id, true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            var response = JSON.parse(xhr.responseText);
+                            
+                            if (response.success) {
+                                var row = document.getElementById("row-" + id);
+                                if (row) {
+                                    row.style.backgroundColor = "#ffcccc";
+                                    row.style.transition = "0.5s";
+                                    
+                                    setTimeout(function () {
+                                        row.remove();
+                                        
+                                        // Check if table is empty
+                                        var tbody = document.querySelector('tbody');
+                                        if (!tbody || tbody.children.length === 0) {
+                                            var tableContainer = document.getElementById('hoSoTableContainer');
+                                            if (tableContainer) tableContainer.remove();
+                                            
+                                            var alertDiv = document.getElementById('noHoSoAlert');
+                                            if (alertDiv) alertDiv.style.display = 'block';
+                                        }
+                                    }, 500);
+                                }
+                            } else {
+                                alert(response.message);
+                            }
+                        } else {
+                            alert("Đã xảy ra lỗi khi thực hiện xóa.");
+                        }
+                    }
+                };
+                
+                xhr.send("__RequestVerificationToken=" + encodeURIComponent(token));
+            }
+        }
+    </script>
+}

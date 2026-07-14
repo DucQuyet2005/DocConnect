@@ -256,6 +256,10 @@ namespace DocConnect.Web.Controllers
         public async Task<IActionResult> DanhSachPhien()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             
             // 1. Lấy tất cả phiên của bác sĩ
             var danhSachPhien = await _tinNhanRepository.GetPhienTuVansByBacSiIdAsync(userId);
@@ -292,6 +296,10 @@ namespace DocConnect.Web.Controllers
         public async Task<IActionResult> GetDanhSachPhienJson()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             var phienTuVans = await _tinNhanRepository.GetPhienTuVansByBacSiIdAsync(userId);
             var data = phienTuVans
                 .Select(p => new {

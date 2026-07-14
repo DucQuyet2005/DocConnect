@@ -20,6 +20,16 @@ namespace DocConnect.Web.Controllers
             _context = context;
         }
 
+        [HttpGet("")]
+        public IActionResult Index()
+        {
+            if (User.IsInRole("Doctor"))
+            {
+                return RedirectToAction(nameof(QuanLyBenhAn));
+            }
+            return RedirectToAction(nameof(LichSuBenhAn));
+        }
+
         public class TaoHoSoRequest
         {
             public int PhienTuVanId { get; set; }
@@ -107,6 +117,20 @@ namespace DocConnect.Web.Controllers
             var phien = await _context.PhienTuVans.FindAsync(hoSo.PhienTuVanId);
             if (phien == null || phien.BacSiId != bacSiId) return Forbid();
 
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { 
+                    success = true, 
+                    id = hoSo.Id, 
+                    phienTuVanId = hoSo.PhienTuVanId,
+                    nguoiDungId = hoSo.NguoiDungId,
+                    thoiGian = hoSo.ThoiGian.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    tenBacSi = hoSo.TenBacSi,
+                    trieuChung = hoSo.TrieuChung, 
+                    ketLuan = hoSo.KetLuan 
+                });
+            }
+
             return View(hoSo);
         }
 
@@ -130,8 +154,19 @@ namespace DocConnect.Web.Controllers
                 hoSo.KetLuan = model.KetLuan;
                 _context.HoSoSucKhoes.Update(hoSo);
                 await _context.SaveChangesAsync();
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = "Cập nhật hồ sơ bệnh án thành công!", data = new { id = hoSo.Id, trieuChung = hoSo.TrieuChung, ketLuan = hoSo.KetLuan } });
+                }
+
                 TempData["SuccessMessage"] = "Cập nhật hồ sơ bệnh án thành công!";
                 return RedirectToAction(nameof(QuanLyBenhAn));
+            }
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ." });
             }
             return View(model);
         }
@@ -151,6 +186,12 @@ namespace DocConnect.Web.Controllers
 
             _context.HoSoSucKhoes.Remove(hoSo);
             await _context.SaveChangesAsync();
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, message = "Đã xóa hồ sơ bệnh án thành công." });
+            }
+
             TempData["SuccessMessage"] = "Đã xóa hồ sơ bệnh án.";
             return RedirectToAction(nameof(QuanLyBenhAn));
         }
