@@ -1,0 +1,58 @@
+@model IEnumerable<DocConnect.Web.Models.ViewModels.BacSiViewModel>
+
+@if (Model != null && Model.Any())
+{
+    foreach (var dr in Model)
+    {
+        <div class="col-xl-3 col-lg-4 col-md-6 dr-item">
+            <div class="dr-card">
+                <div>
+                    <div class="dr-avatar-wrap">
+                        <img src="@(string.IsNullOrEmpty(dr.AnhDaiDien) ? "/images/default-avatar.png" : dr.AnhDaiDien)" 
+                             class="dr-avatar" 
+                             onerror="this.onerror=null; this.src='/images/default-avatar.png';" 
+                             alt="BS. @dr.HoTen" />
+                        
+                        <!-- Hiển thị chấm trạng thái hoạt động thực tế -->
+                        @if (dr.TrangThai == true)
+                        {
+                            <div class="online-indicator" title="Đang trực tuyến (Đang rảnh)"></div>
+                        }
+                        else
+                        {
+                            <div class="online-indicator bg-secondary" title="Vắng mặt (Ngoại tuyến)" style="background-color: #94a3b8 !important;"></div>
+                        }
+                    </div>
+                    
+                    <div class="dr-name">
+                        @(dr.HoTen.StartsWith("BS.") ? dr.HoTen : $"BS. {dr.HoTen}")
+                    </div>
+                    <div class="dr-specialty">@dr.TenChuyenKhoa</div>
+                    <div class="dr-exp">
+                        <i class="fa-solid fa-briefcase text-secondary me-1"></i> @dr.KinhNghiem
+                    </div>
+                    
+                    <a href="/BacSi/ChiTiet/@dr.Id" class="stretched-link"></a>
+                </div>
+                
+                <div>
+                    <form asp-controller="TinNhan" asp-action="KhoiTaoPhien" method="post" class="d-inline m-0">
+                        <input type="hidden" name="bacSiId" value="@dr.Id" />
+                        <button type="submit" class="btn-chat-dr shadow-sm">
+                            <i class="fa-solid fa-comment-dots"></i>
+                            <span>Nhắn tin tư vấn</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="col-12 text-center py-5">
+        <div class="text-muted fs-5">
+            <i class="fa-solid fa-user-slash me-2"></i>Không tìm thấy bác sĩ nào phù hợp với bộ lọc hiện tại.
+        </div>
+    </div>
+}

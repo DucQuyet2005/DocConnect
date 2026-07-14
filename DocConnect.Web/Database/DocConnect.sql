@@ -398,7 +398,8 @@ BEGIN
         c.TenChuyenKhoa,
         h.ChuyenKhoaId,
         ISNULL(h.KinhNghiem, N'Đang cập nhật kinh nghiệm khám chữa bệnh.') AS KinhNghiem,
-        ISNULL(h.GioiThieu, N'Đang cập nhật thông tin giới thiệu.') AS GioiThieu
+        ISNULL(h.GioiThieu, N'Đang cập nhật thông tin giới thiệu.') AS GioiThieu,
+        n.TrangThai
     FROM HoSoBacSi h
     INNER JOIN NguoiDung n ON h.NguoiDungId = n.Id
     INNER JOIN ChuyenKhoa c ON h.ChuyenKhoaId = c.Id
@@ -413,9 +414,10 @@ GO
 DROP PROCEDURE IF EXISTS [dbo].[GetDanhSachBacSi]
 GO
 
--- 2. Tạo thủ tục mới chống lỗi ép kiểu dữ liệu 'Hoạt động' sang bit
+-- 2. Tạo thủ tục mới chống lỗi ép kiểu dữ liệu 'Hoạt động' sang bit và hỗ trợ tìm kiếm từ khóa
 CREATE PROCEDURE [dbo].[GetDanhSachBacSi]
-    @ChuyenKhoaId INT = NULL
+    @ChuyenKhoaId INT = NULL,
+    @Keyword NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -429,20 +431,16 @@ BEGIN
         c.TenChuyenKhoa,
         h.ChuyenKhoaId,
         ISNULL(h.KinhNghiem, N'Đang cập nhật kinh nghiệm') AS KinhNghiem,
-        ISNULL(h.GioiThieu, '') AS GioiThieu
+        ISNULL(h.GioiThieu, '') AS GioiThieu,
+        n.TrangThai
     FROM HoSoBacSi h
     INNER JOIN NguoiDung n ON h.NguoiDungId = n.Id
     INNER JOIN ChuyenKhoa c ON h.ChuyenKhoaId = c.Id
     WHERE n.VaiTro = 'Doctor'
-      -- Cách lọc thông minh: Chấp nhận cả kiểu bit (1), kiểu chuỗi ('true') hoặc chữ ('Hoạt động') mà không gây lỗi cast
-      AND (
-            n.TrangThai = '1' 
-            OR n.TrangThai = 'true' 
-            OR TRY_CAST(n.TrangThai AS NVARCHAR) = N'Hoạt động'
-            OR n.TrangThai IS NULL -- Đề phòng dữ liệu rỗng
-          )
       -- Lọc động theo chuyên khoa
-      AND (@ChuyenKhoaId IS NULL OR @ChuyenKhoaId = 0 OR h.ChuyenKhoaId = @ChuyenKhoaId);
+      AND (@ChuyenKhoaId IS NULL OR @ChuyenKhoaId = 0 OR h.ChuyenKhoaId = @ChuyenKhoaId)
+      -- Tìm kiếm theo từ khóa
+      AND (@Keyword IS NULL OR @Keyword = '' OR n.HoTen LIKE '%' + @Keyword + '%' OR c.TenChuyenKhoa LIKE '%' + @Keyword + '%');
 END
 GO
 /****** Object:  StoredProcedure [dbo].[GetTop5BacSi]    Script Date: 7/10/2026 7:08:33 AM ******/
@@ -466,7 +464,8 @@ BEGIN
         c.TenChuyenKhoa,
         h.ChuyenKhoaId,
         ISNULL(h.KinhNghiem, N'Đang cập nhật kinh nghiệm') AS KinhNghiem,
-        ISNULL(h.GioiThieu, '') AS GioiThieu
+        ISNULL(h.GioiThieu, '') AS GioiThieu,
+        n.TrangThai
     FROM HoSoBacSi h
     INNER JOIN NguoiDung n ON h.NguoiDungId = n.Id
     INNER JOIN ChuyenKhoa c ON h.ChuyenKhoaId = c.Id

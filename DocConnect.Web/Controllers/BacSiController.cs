@@ -39,7 +39,15 @@ namespace DocConnect.Web.Controllers
             ViewBag.SelectedChuyenKhoa = chuyenKhoaId;
             ViewBag.SelectedNgayKham = ngayKham;
             ViewBag.Keyword = keyword; // Giữ lại từ khóa tìm kiếm trên giao diện
-
+// KIỂM TRA YÊU CẦU AJAX
+    // Kiểm tra header X-Requested-With từ Javascript gửi lên
+    var isAjax =Request.Headers["X-Requested-With"]=="XMLHttpRequest";
+    if(isAjax)
+    {
+        // Trả về Partial View chỉ chứa danh sách thẻ bác sĩ
+        return PartialView("_DoctorListPartial",danhSachBacSi);
+    }
+    
             return View(danhSachBacSi);
         }
 

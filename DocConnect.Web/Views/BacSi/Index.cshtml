@@ -103,7 +103,8 @@
     <form method="get" asp-controller="BacSi" asp-action="Index" class="d-flex flex-wrap gap-3 justify-content-center align-items-center">
         <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
 
-        <select name="chuyenKhoaId" class="filter-item" onchange="this.form.submit()">
+       <!-- <select name="chuyenKhoaId" class="filter-item" onchange="this.form.submit()">-->
+        <select name="chuyenKhoaId" id="chuyenKhoaId" class="filter-item">
             <option value="">-- Tất cả chuyên khoa --</option>
             @if (ViewBag.ChuyenKhoas != null)
             {
@@ -119,8 +120,11 @@
         <a href="/BacSi" class="btn btn-link btn-sm text-secondary text-decoration-none"><i class="fa-solid fa-arrow-rotate-left me-1"></i>Xóa lọc</a>
     </form>
 
+
+
 <section class="py-5 bg-light-subtle">
     <div class="container">
+    <!--
         <div class="row g-4">
             @if (Model != null && Model.Any())
             {
@@ -166,5 +170,106 @@
                 </div>
             }
         </div>
+        */
+         <!-- Đặt ID cho hàng row chứa danh sách và nạp Partial View ban đầu -->
+        <div class="row g-4" id="doctor-list-container" style="transition: opacity 0.3s ease;">
+            <partial name="_DoctorListPartial" model="Model" />
+        </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const filterForm = document.getElementById("filter-form");
+            const searchForm = document.querySelector(".search-dr-box");
+            const searchInput = searchForm ? searchForm.querySelector("input[name='keyword']") : null;
+            const keywordHidden = document.getElementById("keyword-hidden");
+            const chuyenKhoaSelect = document.getElementById("chuyenKhoaId");
+            const ngayKhamInput = document.getElementById("ngayKham");
+            const container = document.getElementById("doctor-list-container");
+            const clearFilterBtn = document.getElementById("btn-clear-filter");
+
+            // Hàm thực hiện gọi AJAX
+            function performFilter() {
+                // 1. Tạo hiệu ứng mờ dần (fade-out) trước khi gửi yêu cầu
+                container.style.opacity = "0.5";
+
+                // 2. Thu thập tham số lọc
+                const chuyenKhoaId = chuyenKhoaSelect ? chuyenKhoaSelect.value : "";
+                const ngayKham = ngayKhamInput ? ngayKhamInput.value : "";
+                const keyword = searchInput ? searchInput.value : "";
+
+                // Đồng bộ từ khóa tìm kiếm sang form ẩn
+                if (keywordHidden) {
+                    keywordHidden.value = keyword;
+                }
+
+                // Xây dựng URL truy vấn
+                const url = `/BacSi?chuyenKhoaId=${encodeURIComponent(chuyenKhoaId)}&ngayKham=${encodeURIComponent(ngayKham)}&keyword=${encodeURIComponent(keyword)}`;
+
+                // 3. Sử dụng XMLHttpRequest để gửi request AJAX
+                const xhr = new XMLHttpRequest();
+                xhr.open("GET", url, true);
+                // Đánh dấu request là AJAX
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            // Cập nhật DOM với nội dung Partial View mới nhận được
+                            container.innerHTML = xhr.responseText;
+                            
+                            // Tạo hiệu ứng hiện lại dần dần (fade-in) sau khi nạp HTML thành công
+                            setTimeout(() => {
+                                container.style.opacity = "1";
+                            }, 50);
+                        } else {
+                            console.error("Lỗi khi tải danh sách bác sĩ.");
+                            container.style.opacity = "1";
+                        }
+                    }
+                };
+                xhr.send();
+            }
+
+            // Gắn sự kiện khi thay đổi các bộ lọc dropdown/date
+            if (chuyenKhoaSelect) {
+                chuyenKhoaSelect.addEventListener("change", performFilter);
+            }
+            if (ngayKhamInput) {
+                ngayKhamInput.addEventListener("change", performFilter);
+            }
+
+            // Ngăn sự kiện submit form mặc định của form tìm kiếm và thay bằng AJAX
+            if (searchForm) {
+                searchForm.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    performFilter();
+                });
+            }
+
+            // Hỗ trợ tìm kiếm thời gian thực (Debounce) khi người dùng gõ phím
+            let debounceTimer;
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    clearTimeout(debounceTimer);
+                    // Đợi 400ms sau khi người dùng dừng gõ rồi mới gửi AJAX
+                    debounceTimer = setTimeout(performFilter, 400);
+                });
+            }
+
+            // Xử lý nút xóa lọc bằng AJAX
+            if (clearFilterBtn) {
+                clearFilterBtn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    if (chuyenKhoaSelect) chuyenKhoaSelect.value = "";
+                    if (ngayKhamInput) ngayKhamInput.value = "";
+                    if (searchInput) searchInput.value = "";
+                    if (keywordHidden) keywordHidden.value = "";
+                    performFilter();
+                });
+            }
+        });
+    </script>
+}
