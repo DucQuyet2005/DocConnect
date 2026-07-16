@@ -27,7 +27,7 @@ namespace DocConnect.Web.Controllers
             // Sử dụng SqlParameter để tránh lỗi SQL Injection và xử lý tiếng Việt / Chuỗi rỗng an toàn
             var paramChuyenKhoa = new SqlParameter("@ChuyenKhoaId", SqlDbType.Int) { Value = p_ChuyenKhoaId };
             var paramKeyword = new SqlParameter("@Keyword", SqlDbType.NVarChar, 100) { Value = (object)p_Keyword ?? DBNull.Value };
-''
+
             var danhSachBacSi = _context.Database
                 .SqlQueryRaw<BacSiViewModel>(
                     "EXEC GetDanhSachBacSi @ChuyenKhoaId, @Keyword", 

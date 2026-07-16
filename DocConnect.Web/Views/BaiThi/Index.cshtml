@@ -1,0 +1,141 @@
+@model DocConnect.Web.Models.Entities.HoSoBacSi
+@{
+    ViewData["Title"] = "Bài Thi - Quản lý Bác sĩ";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Phan 1:Them moi ho so cho bac si tuong ung</h2>
+    <div id="formMessage" class="alert d-none"></div>
+
+    <div class="card mb-5">
+        <div class="card-body">
+            <form id="createDoctorForm" asp-action="Create" method="post">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="NguoiDungId" class="form-label">Người dùng (Bác sĩ)</label>
+                        <select asp-for="NguoiDungId" asp-items="ViewBag.NguoiDungs" class="form-select">
+                            <option value="">-- Chọn người dùng --</option>
+                        </select>
+                        <span asp-validation-for="NguoiDungId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ChuyenKhoaId" class="form-label">Chuyên khoa</label>
+                        <select asp-for="ChuyenKhoaId" asp-items="ViewBag.ChuyenKhoas" class="form-select">
+                            <option value="">-- Chọn chuyên khoa --</option>
+                        </select>
+                        <span asp-validation-for="ChuyenKhoaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="AccessCode" class="form-label"></label>
+                        <input asp-for="AccessCode" class="form-control" placeholder="Ví dụ: AB12345678" />
+                        <span asp-validation-for="AccessCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="KinhNghiem" class="form-label">Kinh nghiem</label>
+                        <input asp-for="KinhNghiem" class="form-control" />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btnSubmitForm">Luu ho so</button>
+            </form>
+        </div>
+    </div>
+
+    <h2 class="mb-4">Phan 2:Tim kiem bac si theo chuyen khoa</h2>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label for="searchChuyenKhoa" class="form-label">Chon chuyen khoa cho bac si:</label>
+            <select id="searchChuyenKhoa" class="form-select" asp-items="ViewBag.ChuyenKhoas">
+                <option value="">Tat ca chuyen khoa</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Khu vực hiển thị kết quả AJAX -->
+    <div id="doctorResults">
+        <div class="text-muted">Dang tai du lieu</div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchDropdown = document.getElementById('searchChuyenKhoa');
+            const doctorResults = document.getElementById('doctorResults');
+            const createForm = document.getElementById('createDoctorForm');
+            const formMessage = document.getElementById('formMessage');
+            const btnSubmit = document.getElementById('btnSubmitForm');
+
+            loadDoctors('');
+
+            searchDropdown.addEventListener('change', function () {
+                loadDoctors(this.value);
+            });
+
+            createForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                if (!this.checkValidity()) {
+                    this.reportValidity();
+                    return;
+                }
+
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu...';
+
+                const formData = new FormData(this);
+
+                fetch('@Url.Action("Create", "BaiThi")', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        formMessage.classList.remove('d-none', 'alert-success', 'alert-danger');
+                        if (data.success) {
+                            formMessage.classList.add('alert-success');
+                            formMessage.textContent = data.message;
+
+                
+                            createForm.reset();
+
+                            loadDoctors(searchDropdown.value);
+                        } else {
+                            formMessage.classList.add('alert-danger');
+                            formMessage.textContent = data.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+                        }
+                    })
+                    .catch(error => {
+                        formMessage.classList.remove('d-none', 'alert-success', 'alert-danger');
+                        formMessage.classList.add('alert-danger');
+                        formMessage.textContent = 'Loi ket noi';
+                    })
+                    .finally(() => {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = 'Luu du lieu';
+                    });
+            });
+
+            function loadDoctors(chuyenKhoaId) {
+                doctorResults.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+
+                fetch('@Url.Action("SearchBySpecialty", "BaiThi")?chuyenKhoaId=' + chuyenKhoaId)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network error');
+                        return response.text();
+                    })
+                    .then(html => {
+                        doctorResults.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        doctorResults.innerHTML = '<div class="alert alert-danger">Co loi khi load du lieu</div>';
+                    });
+            }
+        });
+    </script>
+}
